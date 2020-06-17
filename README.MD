@@ -27,13 +27,13 @@ Please complete the Docker setup, before moving to the next section.
 
 ## Build Producer/Consumer
 
-In **mysql-cdc** directory, build producer/consumer
+In **flv-mysql-cdc-demo** directory, build producer/consumer
 
 ```
 $ cargo build
 ...
-Compiling cdc-producer v0.1.0 (/projects/github/rust-demo-apps/mysql-cdc/cdc-producer)
-Compiling cdc-consumer v0.1.0 (/projects/github/rust-demo-apps/mysql-cdc/cdc-consumer)
+Compiling cdc-producer v0.1.0 (/projects/github/flv-mysql-cdc-demo/mysql-cdc/cdc-producer)
+Compiling cdc-consumer v0.1.0 (/projects/github/flv-mysql-cdc-demo/mysql-cdc/cdc-consumer)
 Finished dev [unoptimized + debuginfo] target(s) in 1m 21s
 ```
 
