@@ -95,7 +95,7 @@ mysql>
 
 ## Next Steps
 
-Your environment is ready to [build and run Mysql-CDC](../README.md#build-producerconsumer).
+Your environment is ready to [build and run Mysql-CDC](../README.MD#build-producerconsumer).
 
 ## Troubleshooting
 This guide helps users to solve issues they might face during the setup process.
