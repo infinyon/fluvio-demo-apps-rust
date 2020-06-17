@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "cdc-messages",
+    "cdc-producer",
+    "cdc-consumer",
+]
