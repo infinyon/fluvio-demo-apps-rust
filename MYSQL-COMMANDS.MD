@@ -49,7 +49,7 @@ DELETE from pet where name="Puffball";
 ```
 
 ```
-INSERT INTO VALUES ("Spot", "Jane", "dog", "m", "2010-11-2", Null);
+INSERT INTO pet VALUES ("Spot", "Jane", "dog", "m", "2010-11-2", Null);
 ```
 
 ```
