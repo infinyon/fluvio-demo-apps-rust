@@ -21,7 +21,7 @@ do
 done
 
 # Print helpFunction in case parameters are empty
-if [ -z "$name" ] || [-z "$path"] || [ -z "$port" ]
+if [ -z "$name" ] || [ -z "$path" ] || [ -z "$port" ]
 then
    echo "Invalid parameters";
    helpFunction
