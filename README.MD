@@ -1,6 +1,6 @@
-# Mysql Change Data Capture (CDC) Demo App - for Fluvio Streaming Platform
+# Change Data Capture (CDC) Demo App - for Fluvio Streaming Platform
 
-**Change Data Capture (CDC)** converts database changes in real-time events that can be used to improve replication, keep audit trails, as well as feed downstream business intelligence tools.
+**Change Data Capture (CDC)** converts **MySQL** database changes in real-time events that can be used to improve replication, keep audit trails, as well as feed downstream business intelligence tools.
 
 This demo focuses on **database replication**. We'll use a **CDC producer** to publish database events to a **Fluvio stream** and **CDC consumers** to create identical databases replicas.
 
