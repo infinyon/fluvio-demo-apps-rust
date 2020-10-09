@@ -1,0 +1,42 @@
+[package]
+name = "fluvio-mysql-cdc"
+version = "0.1.0"
+authors = ["Fluvio Contributors <team@fluvio.io>"]
+edition = "2018"
+
+[lib]
+name = "fluvio_cdc"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cdc-producer"
+path = "src/bin/producer.rs"
+
+[[bin]]
+name = "cdc-consumer"
+path = "src/bin/consumer.rs"
+
+[dependencies]
+tracing = "0.1.21"
+tracing-subscriber = "0.2.13"
+tracing-futures = "0.2.4"
+mysql = "18.2.0"
+crossbeam-channel = "0.4.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.53"
+dirs = "2.0.2"
+toml = "0.5.6"
+ctrlc = "3.1.4"
+bigdecimal = { version="^0.1.2", features=["serde"] }
+chrono = "0.4.11"
+http = "0.2.1"
+async-std = "1.6.0"
+structopt = { version = "0.3", default-features = false }
+futures = { version = "0.3.4", features = ['async-await'] }
+mysql_binlog = { git = "https://github.com/infinyon/rust-mysql-binlog" }
+thiserror = "1.0.20"
+color-eyre = "0.5.6"
+fluvio = "0.2.0"
+
+[dev-dependencies]
+async-std = "1.6.5"
