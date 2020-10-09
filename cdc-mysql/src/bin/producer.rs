@@ -1,17 +1,17 @@
-use std::io::{Error, ErrorKind};
 use crossbeam_channel::{bounded, select, Receiver};
+use std::io::{Error, ErrorKind};
 use tracing_subscriber::prelude::*;
 
-use fluvio_cdc::producer::{Config, get_cli_opt};
-use fluvio_cdc::producer::{FluvioManager, BinLogManager, Resume};
-use fluvio_cdc::messages::BinLogMessage;
 use fluvio_cdc::error::CdcError;
+use fluvio_cdc::messages::BinLogMessage;
+use fluvio_cdc::producer::{get_cli_opt, Config};
+use fluvio_cdc::producer::{BinLogManager, FluvioManager, Resume};
 
 async fn run() -> Result<(), CdcError> {
     // read profile
     let params = get_cli_opt();
-    let config = Config::load(&params.profile).
-        map_err(|source| CdcError::ConfigError { source })?;
+    let config =
+        Config::load(&params.profile).map_err(|source| CdcError::ConfigError { source })?;
     let profile = config.profile();
 
     // create channels
@@ -25,13 +25,16 @@ async fn run() -> Result<(), CdcError> {
     let bn_manager = BinLogManager::new(&profile, sender)
         .map_err(|source| CdcError::BinlogFileError { source })?;
 
-    // create resume
-    println!("Using resume file path: {:?}", profile.resume_file());
-    let mut resume = Resume::load(profile.resume_file()).await
+    // create resume offset or none
+    let mut resume = Resume::load(profile.resume_offset_file())
+        .await
         .map_err(|source| CdcError::ResumeError { source })?;
     if let Some(binfile) = resume.binfile.as_ref() {
-        println!("Resuming with {:?}", binfile);
+        println!("Resuming from {:?}", binfile);
+    } else {
+        println!("Resuming from start");
     }
+    println!("{:?}", resume);
 
     let ts_frequency = None;
     bn_manager.run(resume.clone(), ts_frequency);

@@ -14,9 +14,9 @@ use super::parse_records_from_file;
 use super::IndexFile;
 use super::Resume;
 use super::{get_file_id, BinLogFile};
-use crate::producer::{Profile, Filters};
-use crate::producer::db_store::DbStore;
 use crate::error::CdcError;
+use crate::producer::db_store::DbStore;
+use crate::producer::{Filters, Profile};
 
 const DELAY_MIN_MILIS: u64 = 500;
 
@@ -227,11 +227,11 @@ fn expand_tilde<P: AsRef<Path>>(path_user_input: P) -> Option<PathBuf> {
 
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
     use crossbeam_channel::bounded;
+    use std::path::PathBuf;
 
-    use crate::producer::Profile;
     use crate::messages::BnFile;
+    use crate::producer::Profile;
 
     use super::BinLogFile;
     use super::BinLogManager;

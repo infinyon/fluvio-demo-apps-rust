@@ -42,7 +42,7 @@ impl Config {
 pub struct Profile {
     binlog_index_file: PathBuf,
     mysql_resource_name: String,
-    resume_file: PathBuf,
+    resume_offset_file: PathBuf,
     database: Database,
     filters: Option<Filters>,
     fluvio: Option<Fluvio>,
@@ -96,8 +96,8 @@ impl Profile {
         &self.binlog_index_file
     }
 
-    pub fn resume_file(&self) -> &Path {
-        &self.resume_file
+    pub fn resume_offset_file(&self) -> &Path {
+        &self.resume_offset_file
     }
 
     pub fn mysql_resource_name(&self) -> &String {
@@ -164,7 +164,7 @@ mod tests {
         filter.normalize();
         match filter {
             Filters::Exclude { .. } => panic!("wrong variant"),
-            Filters::Include { include_dbs} => {
+            Filters::Include { include_dbs } => {
                 assert_eq!(&include_dbs[0], "flvdb");
                 assert_eq!(&include_dbs[1], "fluviodatabase");
                 assert_eq!(&include_dbs[2], "fluvio_db");

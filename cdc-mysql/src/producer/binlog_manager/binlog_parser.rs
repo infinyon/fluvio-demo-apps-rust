@@ -1,19 +1,17 @@
-use std::io::{Error, ErrorKind};
 use crossbeam_channel::Sender;
 use mysql_binlog::event::TypeCode;
 use mysql_binlog::{parse_file, BinlogEvent};
+use std::io::{Error, ErrorKind};
 use tracing::{debug, instrument};
 
-use crate::producer::Filters;
 use crate::producer::db_store::DbStore;
+use crate::producer::Filters;
 
+use crate::error::CdcError;
 use crate::messages::{BeforeAfterCols, BinLogMessage, Cols, Operation};
 use crate::messages::{DeleteRows, UpdateRows, WriteRows};
-use crate::error::CdcError;
 
-#[instrument(
-    skip(sender, log_file, offset, filters, db_store)
-)]
+#[instrument(skip(sender, log_file, offset, filters, db_store))]
 pub fn parse_records_from_file(
     sender: &Sender<String>,
     log_file: &str,
@@ -25,7 +23,7 @@ pub fn parse_records_from_file(
 ) -> Result<Option<u64>, CdcError> {
     let mut latest_offset = None;
 
-    for event in parse_file(&log_file, None)? {
+    for event in parse_file(&log_file, offset)? {
         debug!(?event, "Event from binlog parser:");
         if let Ok(event) = event {
             latest_offset = Some(event.offset);
@@ -42,9 +40,7 @@ pub fn parse_records_from_file(
     Ok(latest_offset)
 }
 
-#[instrument(
-    skip(sender, file_name, event, offset, filters, db_store, urn)
-)]
+#[instrument(skip(sender, file_name, event, offset, filters, db_store, urn))]
 fn process_event(
     sender: &Sender<String>,
     file_name: &str,
@@ -54,7 +50,11 @@ fn process_event(
     db_store: &mut DbStore,
     urn: &str,
 ) -> Result<(), CdcError> {
-    let allowed = allowed_by_filters(filters, event.schema.as_deref(), event.schema_name.as_deref());
+    let allowed = allowed_by_filters(
+        filters,
+        event.schema.as_deref(),
+        event.schema_name.as_deref(),
+    );
 
     if !allowed {
         return Ok(());
