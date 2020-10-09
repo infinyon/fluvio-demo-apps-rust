@@ -11,8 +11,7 @@ mysql_resource_name = "mysql-srv1"
 # Binlog Index file - path of the MYSQL binlog index file
 ##
 binlog_index_file = "~/mysql-cdc/mysql-producer/binlog.index"
-
-resume_file = "~/mysql-cdc/mysql-producer/resume"
+resume_offset_file = "~/mysql-cdc/producer.offset"
 
 ##
 # Mysql database settings
