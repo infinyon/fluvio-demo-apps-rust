@@ -245,6 +245,7 @@ fn allowed_by_filters(
     } else {
         return true;
     };
+    let db_name = db_name.to_ascii_lowercase();
     debug!(?db_name, "Checking DB name");
 
     if let Some(filters) = filters {
@@ -252,12 +253,12 @@ fn allowed_by_filters(
             Filters::Include { include_dbs: dbs } => {
                 let dbs: Vec<_> = dbs.iter().map(|s| &**s).collect();
                 debug!("Checking if {:?} includes {}", &dbs, &db_name);
-                dbs.contains(&db_name)
+                dbs.contains(&&*db_name)
             }
             Filters::Exclude { exclude_dbs: dbs } => {
                 let dbs: Vec<_> = dbs.iter().map(|s| &**s).collect();
                 debug!("Checking if {:?} excludes {}", &dbs, &db_name);
-                !dbs.contains(&db_name)
+                !dbs.contains(&&*db_name)
             }
         }
     } else {

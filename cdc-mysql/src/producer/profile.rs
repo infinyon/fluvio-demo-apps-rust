@@ -24,8 +24,10 @@ impl Config {
 
         let file_str: String = read_to_string(path_ref)
             .map_err(|err| Error::new(ErrorKind::NotFound, format!("{}", err)))?;
-        let profile = toml::from_str(&file_str)
+        let mut profile: Profile = toml::from_str(&file_str)
             .map_err(|err| Error::new(ErrorKind::InvalidData, format!("{}", err)))?;
+
+        profile.filters.as_mut().map(|filter| filter.normalize());
 
         Ok(Self { profile })
     }
@@ -60,6 +62,24 @@ pub enum Filters {
     Include { include_dbs: Vec<String> },
     Exclude { exclude_dbs: Vec<String> },
 }
+
+impl Filters {
+    fn normalize(&mut self) {
+        match self {
+            Filters::Include { include_dbs } => {
+                for name in include_dbs {
+                    name.make_ascii_lowercase();
+                }
+            }
+            Filters::Exclude { exclude_dbs } => {
+                for name in exclude_dbs {
+                    name.make_ascii_lowercase();
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Fluvio {
     topic: String,
@@ -125,5 +145,30 @@ impl Database {
 
     pub fn password(&self) -> Option<String> {
         self.password.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_filter() {
+        let mut filter = Filters::Include {
+            include_dbs: vec![
+                "flvDb".to_string(),
+                "fluviodatabase".to_string(),
+                "FLUVIO_DB".to_string(),
+            ],
+        };
+        filter.normalize();
+        match filter {
+            Filters::Exclude { .. } => panic!("wrong variant"),
+            Filters::Include { include_dbs} => {
+                assert_eq!(&include_dbs[0], "flvdb");
+                assert_eq!(&include_dbs[1], "fluviodatabase");
+                assert_eq!(&include_dbs[2], "fluvio_db");
+            }
+        }
     }
 }

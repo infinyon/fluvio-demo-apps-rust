@@ -27,6 +27,8 @@ impl Config {
         let mut profile: Profile = toml::from_str(&file_str)
             .map_err(|err| Error::new(ErrorKind::InvalidData, format!("{}", err)))?;
 
+        profile.filters.as_mut().map(|filter| filter.normalize());
+
         if let Some(last_offset_file) = expand_tilde(&profile.last_offset_file) {
             profile.last_offset_file = last_offset_file;
         }
@@ -61,6 +63,23 @@ pub struct Database {
 pub enum Filters {
     Include { include_dbs: Vec<String> },
     Exclude { exclude_dbs: Vec<String> },
+}
+
+impl Filters {
+    fn normalize(&mut self) {
+        match self {
+            Self::Include { include_dbs } => {
+                for name in include_dbs {
+                    name.make_ascii_lowercase();
+                }
+            },
+            Self::Exclude { exclude_dbs } => {
+                for name in exclude_dbs {
+                    name.make_ascii_lowercase()
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]

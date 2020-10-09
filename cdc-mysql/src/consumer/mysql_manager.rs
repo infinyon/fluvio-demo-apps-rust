@@ -379,6 +379,7 @@ fn allowed_by_filters(filters: &Option<Filters>, db_name: &Option<String>) -> bo
     }
 
     let db_name = db_name.as_ref().unwrap();
+    let db_name = &db_name.to_ascii_lowercase();
     if let Some(filters) = filters {
         match filters {
             Filters::Include { include_dbs: dbs } => dbs.contains(db_name),
