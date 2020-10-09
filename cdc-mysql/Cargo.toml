@@ -33,7 +33,7 @@ futures = { version = "0.3.4", features = ['async-await'] }
 mysql_binlog = { git = "https://github.com/infinyon/rust-mysql-binlog" }
 thiserror = "1.0.20"
 color-eyre = "0.5.6"
-fluvio = "0.1.0"
+fluvio = "0.2.0"
 
 [dev-dependencies]
 async-std = "1.6.5"

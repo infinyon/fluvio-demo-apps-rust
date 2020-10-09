@@ -1,4 +1,5 @@
 use std::io::{Error, ErrorKind};
+use futures::StreamExt;
 use crossbeam_channel::{bounded, select, Receiver, Sender};
 
 use fluvio_cdc::consumer::{Config, get_cli_opt};
@@ -62,14 +63,10 @@ async fn consume(
     let mut stream = consumer.stream(offset).await?;
 
     // read read from producer and print to terminal
-    while let Ok(response) = stream.next().await {
-        for batch in response.partition.records.batches {
-            for record in batch.records {
-                if let Some(bytes) = record.value().inner_value() {
-                    let msg = String::from_utf8(bytes).expect("error vec => string");
-                    sender.send(msg).expect("error sending message");
-                }
-            }
+    while let Some(Ok(record)) = stream.next().await {
+        if let Some(bytes) = record.try_into_bytes() {
+            let msg = String::from_utf8(bytes).expect("error vec => string");
+            sender.send(msg).expect("error sending message");
         }
     }
 
