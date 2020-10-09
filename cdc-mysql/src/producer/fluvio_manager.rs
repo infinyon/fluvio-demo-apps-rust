@@ -1,3 +1,4 @@
+use tracing::instrument;
 use fluvio::{TopicProducer, PartitionConsumer, FluvioError, Offset};
 use crate::messages::{BinLogMessage, BnFile, FluvioMessage};
 use crate::error::CdcError;
@@ -25,6 +26,7 @@ impl FluvioManager {
         })
     }
 
+    #[instrument(skip(self))]
     pub async fn get_last_file_offset(&mut self) -> Result<Option<BnFile>, CdcError> {
         let record = get_last_record(&self.consumer).await?;
         if let Some(json_msg) = record {
@@ -37,6 +39,7 @@ impl FluvioManager {
         }
     }
 
+    #[instrument(skip(self, bn_message))]
     pub async fn process_msg(&mut self, bn_message: BinLogMessage) -> Result<(), CdcError> {
         let flv_message = FluvioMessage::new(bn_message, self.sequence);
         let msg = serde_json::to_string(&flv_message).unwrap();
@@ -49,6 +52,7 @@ impl FluvioManager {
     }
 }
 
+#[instrument(skip(consumer))]
 pub async fn get_last_record(consumer: &PartitionConsumer) -> Result<Option<String>, FluvioError> {
     let response = consumer.fetch(Offset::end()).await?;
 

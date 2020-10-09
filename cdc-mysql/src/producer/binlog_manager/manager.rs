@@ -8,6 +8,7 @@ use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
+use tracing::{debug, instrument};
 
 use super::parse_records_from_file;
 use super::IndexFile;
@@ -47,6 +48,7 @@ impl BinLogManager {
         })
     }
 
+    #[instrument(skip(self, resume, frequency_mili))]
     pub fn run(mut self, resume: Resume, frequency_mili: Option<u64>) {
         let mut init = true;
 
@@ -62,6 +64,7 @@ impl BinLogManager {
         });
     }
 
+    #[instrument(skip(self, resume, init))]
     fn inner_run(&mut self, resume: &Resume, init: bool) -> Result<(), CdcError> {
         if init {
             self.set_current_file(resume)?;
@@ -119,8 +122,10 @@ impl BinLogManager {
         false
     }
 
+    #[instrument(skip(self))]
     fn send_current_file_records(&mut self) -> Result<(), CdcError> {
         let current_file = self.current_file.as_ref().unwrap();
+        debug!("Sending file: {:?}", current_file);
 
         let new_offset = parse_records_from_file(
             &self.sender,
@@ -136,12 +141,14 @@ impl BinLogManager {
         Ok(())
     }
 
+    #[instrument(skip(self))]
     fn send_all_files_records(&mut self) -> Result<(), CdcError> {
         let files = self.get_files_from_bn_index()?;
 
         for file in files {
             // update current_file
             let next_bn_file = BinLogFile::new(&self.base_dir, &file, None)?;
+            debug!("Next bin file: {:?}", &next_bn_file);
             self.current_file = Some(next_bn_file);
 
             // send_records

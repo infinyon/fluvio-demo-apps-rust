@@ -1,5 +1,6 @@
 use std::io::{Error, ErrorKind};
 use crossbeam_channel::{bounded, select, Receiver};
+use tracing_subscriber::prelude::*;
 
 use fluvio_cdc::producer::{Config, get_cli_opt};
 use fluvio_cdc::producer::{FluvioManager, BinLogManager, Resume};
@@ -77,6 +78,11 @@ fn ctrl_channel() -> Result<Receiver<()>, Error> {
 
 fn main() -> color_eyre::eyre::Result<()> {
     color_eyre::install()?;
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
     async_std::task::block_on(run())?;
     Ok(())
 }

@@ -17,6 +17,9 @@ name = "cdc-consumer"
 path = "src/bin/consumer.rs"
 
 [dependencies]
+tracing = "0.1.21"
+tracing-subscriber = "0.2.13"
+tracing-futures = "0.2.4"
 mysql = "18.2.0"
 crossbeam-channel = "0.4.2"
 serde = { version = "1.0", features = ["derive"] }

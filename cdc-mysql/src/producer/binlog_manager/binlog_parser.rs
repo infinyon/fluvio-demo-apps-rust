@@ -2,6 +2,7 @@ use std::io::{Error, ErrorKind};
 use crossbeam_channel::Sender;
 use mysql_binlog::event::TypeCode;
 use mysql_binlog::{parse_file, BinlogEvent};
+use tracing::{debug, instrument};
 
 use crate::producer::Filters;
 use crate::producer::db_store::DbStore;
@@ -10,6 +11,9 @@ use crate::messages::{BeforeAfterCols, BinLogMessage, Cols, Operation};
 use crate::messages::{DeleteRows, UpdateRows, WriteRows};
 use crate::error::CdcError;
 
+#[instrument(
+    skip(sender, log_file, offset, filters, db_store)
+)]
 pub fn parse_records_from_file(
     sender: &Sender<String>,
     log_file: &str,
@@ -21,7 +25,8 @@ pub fn parse_records_from_file(
 ) -> Result<Option<u64>, CdcError> {
     let mut latest_offset = None;
 
-    for event in parse_file(&log_file, offset)? {
+    for event in parse_file(&log_file, None)? {
+        debug!(?event, "Event from binlog parser:");
         if let Ok(event) = event {
             latest_offset = Some(event.offset);
 
@@ -37,6 +42,9 @@ pub fn parse_records_from_file(
     Ok(latest_offset)
 }
 
+#[instrument(
+    skip(sender, file_name, event, offset, filters, db_store, urn)
+)]
 fn process_event(
     sender: &Sender<String>,
     file_name: &str,
@@ -46,11 +54,9 @@ fn process_event(
     db_store: &mut DbStore,
     urn: &str,
 ) -> Result<(), CdcError> {
-    if !allowed_by_filters(
-        filters,
-        event.schema.as_deref(),
-        event.schema_name.as_deref(),
-    ) {
+    let allowed = allowed_by_filters(filters, event.schema.as_deref(), event.schema_name.as_deref());
+
+    if !allowed {
         return Ok(());
     }
     if same_offset(offset, event.offset) {
@@ -59,6 +65,7 @@ fn process_event(
 
     let msg = event_to_message(event, file_name, db_store, urn)?;
     if !msg.is_empty() {
+        debug!("Sending message: {}", &msg);
         sender.send(msg).expect("Send message error");
     }
 
@@ -223,11 +230,13 @@ fn process_delete_rows_event(
 ///  - no filters => true
 ///  - include filters matched => true
 ///  - exclude filters matched => false
+#[instrument(skip(filters, schema, schema_name))]
 fn allowed_by_filters(
     filters: Option<&Filters>,
     schema: Option<&str>,
     schema_name: Option<&str>,
 ) -> bool {
+    debug!(?schema, ?schema_name, "Checking filters");
     // set db name
     let db_name = if let Some(schema) = schema {
         schema
@@ -236,15 +245,18 @@ fn allowed_by_filters(
     } else {
         return true;
     };
+    debug!(?db_name, "Checking DB name");
 
     if let Some(filters) = filters {
         match filters {
             Filters::Include { include_dbs: dbs } => {
                 let dbs: Vec<_> = dbs.iter().map(|s| &**s).collect();
+                debug!("Checking if {:?} includes {}", &dbs, &db_name);
                 dbs.contains(&db_name)
             }
             Filters::Exclude { exclude_dbs: dbs } => {
                 let dbs: Vec<_> = dbs.iter().map(|s| &**s).collect();
+                debug!("Checking if {:?} excludes {}", &dbs, &db_name);
                 !dbs.contains(&db_name)
             }
         }
