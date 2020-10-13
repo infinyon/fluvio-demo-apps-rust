@@ -56,7 +56,8 @@ jobs:
           cluster-type: local
       - name: Install MySQL containers
         run: |
-          pushd ./cdc-mysql/docker
+          pwd
+          pushd cdc-mysql/docker
           ./install.sh -n mysql-producer -d ~/mysql-cdc/mysql-producer -p 3080
           ./install.sh -n mysql-consumer -d ~/mysql-cdc/mysql-consumer -p 3090
           popd
@@ -66,3 +67,10 @@ jobs:
         run: cargo run --bin cdc-consumer -- mysql-cdc/consumer_profile.toml &
       - name: Run SQL commands on Leader database
         run: mysql -h 0.0.0.0 -P 3080 -ufluvio -pfluvio4cdc! -v < mysql-cdc/test_files/producer_script.sql
+      - name: Compare contents of Leader and Follower
+        run: |
+          pushd cdc-mysql
+          diff \
+              <(mysql -h 0.0.0.0 -P 3080 -ufluvio -pfluvio4cdc! -v < test_files/select_script.sql) \
+              <(mysql -h 0.0.0.0 -P 3090 -ufluvio -pfluvio4cdc! -v < test_files/select_script.sql)
+          popd
