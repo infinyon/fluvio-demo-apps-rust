@@ -27,7 +27,9 @@ impl Config {
         let mut profile: Profile = toml::from_str(&file_str)
             .map_err(|err| Error::new(ErrorKind::InvalidData, format!("{}", err)))?;
 
-        profile.filters.as_mut().map(|filter| filter.normalize());
+        if let Some(filter) = profile.filters.as_mut() {
+            filter.normalize();
+        }
 
         if let Some(last_offset_file) = expand_tilde(&profile.last_offset_file) {
             profile.last_offset_file = last_offset_file;
@@ -72,7 +74,7 @@ impl Filters {
                 for name in include_dbs {
                     name.make_ascii_lowercase();
                 }
-            },
+            }
             Self::Exclude { exclude_dbs } => {
                 for name in exclude_dbs {
                     name.make_ascii_lowercase()

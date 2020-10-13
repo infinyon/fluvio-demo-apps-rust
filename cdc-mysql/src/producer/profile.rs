@@ -27,7 +27,9 @@ impl Config {
         let mut profile: Profile = toml::from_str(&file_str)
             .map_err(|err| Error::new(ErrorKind::InvalidData, format!("{}", err)))?;
 
-        profile.filters.as_mut().map(|filter| filter.normalize());
+        if let Some(filter) = profile.filters.as_mut() {
+            filter.normalize();
+        }
 
         Ok(Self { profile })
     }

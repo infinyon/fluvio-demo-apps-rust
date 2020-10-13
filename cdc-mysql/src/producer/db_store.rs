@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::producer::Database;
-use crate::producer::mysql::get_table_columns;
 use crate::error::CdcError;
+use crate::producer::mysql::get_table_columns;
+use crate::producer::Database;
 
 type DbName = String;
 type TableName = String;
