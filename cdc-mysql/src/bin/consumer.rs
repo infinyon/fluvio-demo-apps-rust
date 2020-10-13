@@ -1,12 +1,15 @@
+use std::io::{Error, ErrorKind};
 use crossbeam_channel::{bounded, select, Receiver, Sender};
 use futures::StreamExt;
-use std::io::{Error, ErrorKind};
+use tracing::debug;
+use tracing_subscriber::prelude::*;
 
 use fluvio_cdc::consumer::MysqlManager;
 use fluvio_cdc::consumer::{get_cli_opt, Config};
 use fluvio_cdc::offset_store::OffsetStore;
 
 use fluvio::{FluvioError, Offset, PartitionConsumer};
+use tracing_subscriber::layer::SubscriberExt;
 
 async fn run() -> Result<(), FluvioError> {
     // read profile
@@ -35,6 +38,7 @@ async fn run() -> Result<(), FluvioError> {
             recv(receiver) -> msg => {
                 match msg {
                     Ok(msg) => {
+                        debug!(?msg, "Received message:");
                         mysql.update_database(msg)?;
                         offset_store.increment_offset().await?;
                     }
@@ -64,7 +68,9 @@ async fn consume(
 
     // read read from producer and print to terminal
     while let Some(Ok(record)) = stream.next().await {
+        debug!(offet = record.offset(), "Received record:");
         if let Some(bytes) = record.try_into_bytes() {
+            debug!("Got record bytes");
             let msg = String::from_utf8(bytes).expect("error vec => string");
             sender.send(msg).expect("error sending message");
         }
@@ -85,6 +91,11 @@ fn ctrl_channel() -> Result<Receiver<()>, Error> {
 }
 
 fn main() {
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
     if let Err(err) = async_std::task::block_on(run()) {
         println!("Error: {}", err.to_string());
     }
