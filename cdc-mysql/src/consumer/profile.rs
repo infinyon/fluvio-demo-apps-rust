@@ -72,7 +72,7 @@ impl Filters {
                 for name in include_dbs {
                     name.make_ascii_lowercase();
                 }
-            },
+            }
             Self::Exclude { exclude_dbs } => {
                 for name in exclude_dbs {
                     name.make_ascii_lowercase()

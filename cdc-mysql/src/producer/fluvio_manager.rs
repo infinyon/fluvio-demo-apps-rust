@@ -1,7 +1,7 @@
-use tracing::instrument;
-use fluvio::{TopicProducer, PartitionConsumer, FluvioError, Offset};
-use crate::messages::{BinLogMessage, BnFile, FluvioMessage};
 use crate::error::CdcError;
+use crate::messages::{BinLogMessage, BnFile, FluvioMessage};
+use fluvio::{FluvioError, Offset, PartitionConsumer, TopicProducer};
+use tracing::instrument;
 
 pub struct FluvioManager {
     producer: TopicProducer,

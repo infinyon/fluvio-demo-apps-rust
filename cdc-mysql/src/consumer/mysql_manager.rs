@@ -9,7 +9,7 @@ use mysql::prelude::*;
 use mysql::{Conn, OptsBuilder};
 use std::io::{Error, ErrorKind};
 
-use crate::consumer::profile::{Profile, Filters};
+use crate::consumer::profile::{Filters, Profile};
 use crate::messages::{DeleteRows, UpdateRows, WriteRows};
 use crate::messages::{FluvioMessage, Operation, Value};
 
