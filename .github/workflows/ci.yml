@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  check_clippy:
+    name: Check clippy for Rust demo apps
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install ${{ matrix.rust }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Check clippy
+        run: cargo +${{ matrix.rust }} clippy --all-targets --all-features -- -D warnings
+
+  check_fmt:
+    name: Check formatting for Rust demo apps
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install ${{ matrix.rust }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Check formatting
+        run: cargo +${{ matrix.rust }} fmt -- --check
+
+  test_mysql_cdc:
+    name: Run tests for MySQL CDC app
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+    steps:
+      - name: Install Fluvio Local Cluster
+        uses: infinyon/fluvio@master
+        with:
+          cluster-type: local
+      - name: Install MySQL containers
+        run: |
+          pushd ./cdc-mysql/docker
+          ./install.sh -n mysql-producer -d ~/mysql-cdc/mysql-producer -p 3080
+          ./install.sh -n mysql-consumer -d ~/mysql-cdc/mysql-consumer -p 3090
+          popd
+      - name: Run CDC Producer
+        run: cargo run --bin cdc-producer -- mysql-cdc/producer_profile.toml &
+      - name: Run CDC Consumer
+        run: cargo run --bin cdc-consumer -- mysql-cdc/consumer_profile.toml &
+      - name: Run SQL commands on Leader database
+        run: mysql -h 0.0.0.0 -P 3080 -ufluvio -pfluvio4cdc! -v < mysql-cdc/test_files/producer_script.sql
