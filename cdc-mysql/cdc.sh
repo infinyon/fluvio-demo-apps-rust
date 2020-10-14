@@ -119,8 +119,19 @@ test_mysql() {
   mysql -h 0.0.0.0 -P 3080 -ufluvio -pfluvio4cdc! -v < "${sql_script}"
 }
 
+usage() {
+  echo "setup.sh [reset] [test]"
+  echo "  reset: will uninstall and reinstall local fluvio and mysql"
+  echo "   test: will run mysql producer and consumer tests"
+}
+
 main() {
   local mysql_volume_mount="${HOME}/mysql-cdc"
+
+  if [[ $1 == "help" ]]; then
+    usage
+    exit
+  fi
 
   if [[ $1 == "reset" ]]; then
     shift
