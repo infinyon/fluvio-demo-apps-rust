@@ -294,10 +294,7 @@ fn parse_table_name(query: &Option<String>) -> Option<String> {
 
 fn skip_query_event(query: &Option<String>) -> bool {
     if let Some(query) = query {
-        return match query.to_lowercase().as_str() {
-            "begin" => true,
-            _ => false,
-        };
+        return query.to_lowercase().as_str() == "begin";
     }
     true
 }
