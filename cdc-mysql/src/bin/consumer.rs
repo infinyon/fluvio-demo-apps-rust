@@ -1,12 +1,12 @@
-use std::io::{Error, ErrorKind};
-use futures::StreamExt;
 use crossbeam_channel::{bounded, select, Receiver, Sender};
+use futures::StreamExt;
+use std::io::{Error, ErrorKind};
 
-use fluvio_cdc::consumer::{Config, get_cli_opt};
 use fluvio_cdc::consumer::MysqlManager;
+use fluvio_cdc::consumer::{get_cli_opt, Config};
 use fluvio_cdc::offset_store::OffsetStore;
 
-use fluvio::{FluvioError, PartitionConsumer, Offset};
+use fluvio::{FluvioError, Offset, PartitionConsumer};
 
 async fn run() -> Result<(), FluvioError> {
     // read profile

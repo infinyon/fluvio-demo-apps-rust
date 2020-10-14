@@ -1,8 +1,8 @@
 use mysql::prelude::*;
 use mysql::{from_value, Conn, OptsBuilder, Row};
 
-use crate::producer::Database;
 use crate::error::CdcError;
+use crate::producer::Database;
 
 pub fn get_opts(db_params: &Database) -> OptsBuilder {
     OptsBuilder::new()

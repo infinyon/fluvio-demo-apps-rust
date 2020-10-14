@@ -15,7 +15,7 @@ Each command is translated into an event that is transmitted to follower instanc
 
 ## Database - flvDb
 
-```
+```mysql
 CREATE DATABASE flvDb;
 
 USE flvDb;
@@ -23,7 +23,7 @@ USE flvDb;
 
 ## Table - Pet
 
-```
+```mysql
 CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE);
 
 INSERT INTO pet VALUES ('Puffball','Diane','hamster','f','1999-03-30');
@@ -32,18 +32,18 @@ INSERT INTO pet VALUES ('Jack','Peter','dog','m','1999-03-30');
 
 UPDATE pet SET birth = '1989-08-31' WHERE name = 'Jack';
 
-ALTER TABLE pet ADD COLUMN death DATE;
+ALTER TABLE pet ADD COLUMN color VARCHAR(20);
 
 DELETE from pet where name="Puffball";
 
 INSERT INTO pet VALUES ("Spot", "Jane", "dog", "m", "2010-11-2", Null);
 
-UPDATE pet SET death="2020-6-10" WHERE name="Spot";
+UPDATE pet SET color="White" WHERE name="Spot";
 ```
 
 ## Table - User
 
-```
+```mysql
 CREATE TABLE user (first_name VARCHAR(20), last_name VARCHAR(20),  sex CHAR(1), birth DATE);
 
 INSERT INTO user VALUES ('John','Doe','m','2000-03-30');
@@ -52,7 +52,7 @@ INSERT INTO user VALUES ('John','Doe','m','2000-03-30');
 
 ## Table - Year
 
-```
+```mysql
 CREATE TABLE year (y YEAR);
 
 INSERT INTO year (y) VALUES (1998);
