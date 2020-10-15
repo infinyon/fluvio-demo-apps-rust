@@ -4,23 +4,22 @@ use mysql_binlog::{parse_file, BinlogEvent};
 use std::io::{Error, ErrorKind};
 use tracing::{trace, debug, instrument};
 
-use crate::producer::db_store::DbStore;
 use crate::producer::Filters;
-
 use crate::error::CdcError;
 use crate::messages::{BeforeAfterCols, BinLogMessage, Cols, Operation};
 use crate::messages::{DeleteRows, UpdateRows, WriteRows};
 
+use super::LocalStore;
 use super::parse_query;
 
-#[instrument(skip(sender, log_file, offset, filters, db_store))]
+#[instrument(skip(sender, log_file, offset, filters, local_store))]
 pub fn parse_records_from_file(
     sender: &Sender<String>,
     log_file: &str,
     file_name: &str,
     offset: Option<u64>,
     filters: Option<&Filters>,
-    db_store: &mut DbStore,
+    local_store: &mut LocalStore,
     urn: &str,
 ) -> Result<Option<u64>, CdcError> {
     let mut latest_offset = None;
@@ -32,7 +31,7 @@ pub fn parse_records_from_file(
 
             // print error and continue
             if let Err(err) =
-                process_event(sender, file_name, event, offset, filters, db_store, urn)
+                process_event(sender, file_name, event, offset, filters, local_store, urn)
             {
                 debug!("{:?}", err);
             }
@@ -42,14 +41,14 @@ pub fn parse_records_from_file(
     Ok(latest_offset)
 }
 
-#[instrument(skip(sender, file_name, event, offset, filters, db_store, urn))]
+#[instrument(skip(sender, file_name, event, offset, filters, local_store, urn))]
 fn process_event(
     sender: &Sender<String>,
     file_name: &str,
     event: BinlogEvent,
     offset: Option<u64>,
     filters: Option<&Filters>,
-    db_store: &mut DbStore,
+    local_store: &mut LocalStore,
     urn: &str,
 ) -> Result<(), CdcError> {
     let allowed = allowed_by_filters(
@@ -65,10 +64,10 @@ fn process_event(
         return Ok(());
     }
 
-    let msg = event_to_message(event, file_name, db_store, urn)?;
+    let msg = event_to_message(event, file_name, local_store, urn)?;
     if !msg.is_empty() {
         debug!("Sending message: {}", &msg);
-        // sender.send(msg).expect("Send message error");
+        sender.send(msg).expect("Send message error");
     }
 
     Ok(())
@@ -77,15 +76,15 @@ fn process_event(
 fn event_to_message(
     event: BinlogEvent,
     file_name: &str,
-    db_store: &mut DbStore,
+    local_store: &mut LocalStore,
     urn: &str,
 ) -> Result<String, CdcError> {
-    println!("{:?}", event);
+    debug!("{:?}", event);
     match event.type_code {
-        TypeCode::QueryEvent => process_query_event(event, file_name, db_store, urn),
-        TypeCode::WriteRowsEventV2 => process_write_rows_event(event, file_name, db_store, urn),
-        TypeCode::UpdateRowsEventV2 => process_update_rows_event(event, file_name, db_store, urn),
-        TypeCode::DeleteRowsEventV2 => process_delete_rows_event(event, file_name, db_store, urn),
+        TypeCode::QueryEvent => process_query_event(event, file_name, local_store, urn),
+        TypeCode::WriteRowsEventV2 => process_write_rows_event(event, file_name, local_store, urn),
+        TypeCode::UpdateRowsEventV2 => process_update_rows_event(event, file_name, local_store, urn),
+        TypeCode::DeleteRowsEventV2 => process_delete_rows_event(event, file_name, local_store, urn),
         _ => Err(to_err(format!(
             "Warning: Event '{:?}' skipped (evt2msg)",
             event.type_code
@@ -97,7 +96,7 @@ fn event_to_message(
 fn process_query_event(
     event: BinlogEvent,
     file_name: &str,
-    db_store: &mut DbStore,
+    local_store: &mut LocalStore,
     urn: &str,
 ) -> Result<String, CdcError> {
     if event.schema.is_none() {
@@ -110,7 +109,7 @@ fn process_query_event(
     let schema = event.schema.as_ref().unwrap();
     let table_ops = parse_query(&event.query)?;
 
-    db_store.update_store(schema, table_ops)?;
+    local_store.update_store(schema, table_ops)?;
 
     if skip_query_event(&event.query) {
         return Ok("".to_owned());
@@ -133,11 +132,11 @@ fn process_query_event(
 fn process_write_rows_event(
     event: BinlogEvent,
     file_name: &str,
-    db_store: &mut DbStore,
+    local_store: &mut LocalStore,
     urn: &str,
 ) -> Result<String, CdcError> {
     let (schema, table) = get_schema_table(&event)?;
-    let columns = db_store.get_columns(&schema, &table)?;
+    let columns = local_store.get_columns(&schema, &table)?;
 
     // generate message
     let offset = Some(event.offset);
@@ -165,11 +164,11 @@ fn process_write_rows_event(
 fn process_update_rows_event(
     event: BinlogEvent,
     file_name: &str,
-    db_store: &mut DbStore,
+    local_store: &mut LocalStore,
     urn: &str,
 ) -> Result<String, CdcError> {
     let (schema, table) = get_schema_table(&event)?;
-    let columns = db_store.get_columns(&schema, &table)?;
+    let columns = local_store.get_columns(&schema, &table)?;
 
     // generate message
     let offset = Some(event.offset);
@@ -197,11 +196,11 @@ fn process_update_rows_event(
 fn process_delete_rows_event(
     event: BinlogEvent,
     file_name: &str,
-    db_store: &mut DbStore,
+    local_store: &mut LocalStore,
     urn: &str,
 ) -> Result<String, CdcError> {
     let (schema, table) = get_schema_table(&event)?;
-    let columns = db_store.get_columns(&schema, &table)?;
+    let columns = local_store.get_columns(&schema, &table)?;
 
     // generate message
     let offset = Some(event.offset);

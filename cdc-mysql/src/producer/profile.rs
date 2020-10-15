@@ -43,6 +43,7 @@ pub struct Profile {
     binlog_index_file: PathBuf,
     mysql_resource_name: String,
     resume_offset_file: PathBuf,
+    local_store_file: PathBuf,
     filters: Option<Filters>,
     fluvio: Option<Fluvio>,
 }
@@ -89,6 +90,10 @@ impl Profile {
 
     pub fn resume_offset_file(&self) -> &Path {
         &self.resume_offset_file
+    }
+
+    pub fn local_store_file(&self) -> &Path {
+        &self.local_store_file
     }
 
     pub fn mysql_resource_name(&self) -> &String {

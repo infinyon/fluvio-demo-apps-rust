@@ -1,2 +1,4 @@
 mysql_resource_name = "mysql-local"
 binlog_index_file = "/usr/local/var/mysql/binlog.index"
+resume_offset_file = "~/mysql-cdc/producer.offset"
+local_store_file = "~/mysql-cdc/producer.store"

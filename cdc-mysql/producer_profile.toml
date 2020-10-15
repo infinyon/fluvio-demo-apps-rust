@@ -12,6 +12,7 @@ mysql_resource_name = "mysql-srv1"
 ##
 binlog_index_file = "~/mysql-cdc/mysql-producer/binlog.index"
 resume_offset_file = "~/mysql-cdc/producer.offset"
+local_store_file = "~/mysql-cdc/producer.store"
 
 ##
 # Filters to include or exclude databases

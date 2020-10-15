@@ -1,6 +1,5 @@
 pub mod binlog_manager;
 pub mod cli;
-pub mod db_store;
 pub mod fluvio_manager;
 pub mod profile;
 

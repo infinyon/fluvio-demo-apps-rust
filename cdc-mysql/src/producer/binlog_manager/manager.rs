@@ -13,10 +13,11 @@ use tracing::{trace, debug, instrument};
 use super::parse_records_from_file;
 use super::IndexFile;
 use super::Resume;
+use super::LocalStore;
 use super::{get_file_id, BinLogFile};
 use crate::error::CdcError;
-use crate::producer::db_store::DbStore;
 use crate::producer::{Filters, Profile};
+use crate::util::expand_tilde;
 
 const DELAY_MIN_MILIS: u64 = 500;
 
@@ -29,7 +30,7 @@ pub struct BinLogManager {
     index_file: IndexFile,
     current_file: Option<BinLogFile>,
 
-    db_store: DbStore,
+    local_store: LocalStore,
     urn: String,
 }
 
@@ -43,7 +44,7 @@ impl BinLogManager {
             filters: profile.filters(),
             index_file: IndexFile::new(&base_dir, bn_index_file)?,
             current_file: None,
-            db_store: DbStore::new(),
+            local_store: LocalStore::new(profile.local_store_file())?,
             urn: profile.mysql_resource_name().clone(),
         })
     }
@@ -133,7 +134,7 @@ impl BinLogManager {
             current_file.file_name(),
             current_file.offset(),
             self.filters.as_ref(),
-            &mut self.db_store,
+            &mut self.local_store,
             &self.urn,
         )?;
         self.current_file.as_mut().unwrap().set_offset(new_offset);
@@ -159,7 +160,7 @@ impl BinLogManager {
                 current_file.file_name(),
                 current_file.offset(),
                 self.filters.as_ref(),
-                &mut self.db_store,
+                &mut self.local_store,
                 &self.urn,
             )?;
 
@@ -202,27 +203,6 @@ fn get_base_path_and_file_tuple(bn_file_path: &PathBuf) -> Result<(PathBuf, Stri
         .to_owned();
 
     Ok((base_dir, file))
-}
-
-fn expand_tilde<P: AsRef<Path>>(path_user_input: P) -> Option<PathBuf> {
-    let p = path_user_input.as_ref();
-
-    if !p.starts_with("~") {
-        return Some(p.to_path_buf());
-    }
-
-    if p == Path::new("~") {
-        return dirs::home_dir();
-    }
-
-    dirs::home_dir().map(|mut h| {
-        if h == Path::new("/") {
-            p.strip_prefix("~").unwrap().to_path_buf()
-        } else {
-            h.push(p.strip_prefix("~/").unwrap());
-            h
-        }
-    })
 }
 
 #[cfg(test)]
