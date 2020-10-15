@@ -74,8 +74,6 @@ pub fn parse_query(query: &Option<String>) -> Result<Vec<TableOp>, CdcError> {
                     )
                 }
                 Statement::AlterTable { name, operation } => {
-                    println!("ALTER TABLE {}", name);
-
                     match operation {
                         AlterTableOperation::AddColumn { column_def } => {
                             table_ops.push(

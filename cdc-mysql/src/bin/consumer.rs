@@ -4,7 +4,7 @@ use crossbeam_channel::{bounded, select, Receiver, Sender};
 
 use fluvio_cdc::consumer::{Config, get_cli_opt};
 use fluvio_cdc::consumer::MysqlManager;
-use fluvio_cdc::offset_store::OffsetStore;
+use fluvio_cdc::consumer::OffsetStore;
 
 use fluvio::{FluvioError, PartitionConsumer, Offset};
 
