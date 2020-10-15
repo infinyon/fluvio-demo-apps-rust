@@ -2,7 +2,7 @@ use crossbeam_channel::Sender;
 use mysql_binlog::event::TypeCode;
 use mysql_binlog::{parse_file, BinlogEvent};
 use std::io::{Error, ErrorKind};
-use tracing::{debug, instrument};
+use tracing::{trace, debug, instrument};
 
 use crate::producer::db_store::DbStore;
 use crate::producer::Filters;
@@ -10,6 +10,8 @@ use crate::producer::Filters;
 use crate::error::CdcError;
 use crate::messages::{BeforeAfterCols, BinLogMessage, Cols, Operation};
 use crate::messages::{DeleteRows, UpdateRows, WriteRows};
+
+use super::parse_query;
 
 #[instrument(skip(sender, log_file, offset, filters, db_store))]
 pub fn parse_records_from_file(
@@ -24,7 +26,7 @@ pub fn parse_records_from_file(
     let mut latest_offset = None;
 
     for event in parse_file(&log_file, offset)? {
-        debug!(?event, "Event from binlog parser:");
+        trace!(?event, "Event from binlog parser:");
         if let Ok(event) = event {
             latest_offset = Some(event.offset);
 
@@ -32,7 +34,7 @@ pub fn parse_records_from_file(
             if let Err(err) =
                 process_event(sender, file_name, event, offset, filters, db_store, urn)
             {
-                println!("{:?}", err);
+                debug!("{:?}", err);
             }
         }
     }
@@ -66,7 +68,7 @@ fn process_event(
     let msg = event_to_message(event, file_name, db_store, urn)?;
     if !msg.is_empty() {
         debug!("Sending message: {}", &msg);
-        sender.send(msg).expect("Send message error");
+        // sender.send(msg).expect("Send message error");
     }
 
     Ok(())
@@ -78,6 +80,7 @@ fn event_to_message(
     db_store: &mut DbStore,
     urn: &str,
 ) -> Result<String, CdcError> {
+    println!("{:?}", event);
     match event.type_code {
         TypeCode::QueryEvent => process_query_event(event, file_name, db_store, urn),
         TypeCode::WriteRowsEventV2 => process_write_rows_event(event, file_name, db_store, urn),
@@ -105,11 +108,9 @@ fn process_query_event(
         .into());
     }
     let schema = event.schema.as_ref().unwrap();
+    let table_ops = parse_query(&event.query)?;
 
-    if let Some(table) = parse_table_name(&event.query) {
-        // clear columns (to be regenerated on next table row update)
-        db_store.clear_columns(&schema, &table);
-    }
+    db_store.update_store(schema, table_ops)?;
 
     if skip_query_event(&event.query) {
         return Ok("".to_owned());
@@ -236,7 +237,7 @@ fn allowed_by_filters(
     schema: Option<&str>,
     schema_name: Option<&str>,
 ) -> bool {
-    debug!(?schema, ?schema_name, "Checking filters");
+    trace!(?schema, ?schema_name, "Checking filters");
     // set db name
     let db_name = if let Some(schema) = schema {
         schema
@@ -246,18 +247,18 @@ fn allowed_by_filters(
         return true;
     };
     let db_name = db_name.to_ascii_lowercase();
-    debug!(?db_name, "Checking DB name");
+    trace!(?db_name, "Checking DB name");
 
     if let Some(filters) = filters {
         match filters {
             Filters::Include { include_dbs: dbs } => {
                 let dbs: Vec<_> = dbs.iter().map(|s| &**s).collect();
-                debug!("Checking if {:?} includes {}", &dbs, &db_name);
+                trace!("Checking if {:?} includes {}", &dbs, &db_name);
                 dbs.contains(&&*db_name)
             }
             Filters::Exclude { exclude_dbs: dbs } => {
                 let dbs: Vec<_> = dbs.iter().map(|s| &**s).collect();
-                debug!("Checking if {:?} excludes {}", &dbs, &db_name);
+                trace!("Checking if {:?} excludes {}", &dbs, &db_name);
                 !dbs.contains(&&*db_name)
             }
         }
@@ -273,23 +274,6 @@ fn same_offset(local_offset: Option<u64>, event_offset: u64) -> bool {
         }
     }
     false
-}
-
-fn parse_table_name(query: &Option<String>) -> Option<String> {
-    if let Some(query) = query {
-        let mut table_found = false;
-        let words = query.split_whitespace();
-
-        for word in words {
-            if table_found {
-                return Some(word.replace(&[',', '\"', '`', '\''][..], ""));
-            }
-            if word.to_lowercase() == "table" {
-                table_found = true;
-            }
-        }
-    }
-    None
 }
 
 fn skip_query_event(query: &Option<String>) -> bool {
@@ -317,50 +301,4 @@ fn get_schema_table(event: &BinlogEvent) -> Result<(String, String), Error> {
         "Error: '{:?}' missing table or schema",
         event.type_code
     )))
-}
-
-#[cfg(test)]
-mod test {
-    use super::parse_table_name;
-
-    #[test]
-    fn test_parse_table_name() {
-        // test - none
-        let result = parse_table_name(&None);
-        assert_eq!(result, None);
-
-        // test - "BEGIN"
-        let query = Some("BEGIN".to_owned());
-        let result = parse_table_name(&query);
-        assert_eq!(result, None);
-
-        // test - "create database flvTest"
-        let query = Some("create database flvTest".to_owned());
-        let result = parse_table_name(&query);
-        assert_eq!(result, None);
-
-        // test - "alter table people add col1 int"
-        let query = Some("alter table people add col1 int".to_owned());
-        let result = parse_table_name(&query);
-        assert_eq!(result, Some("people".to_owned()));
-
-        // test - "CREATE TABLE species (name VARCHAR(20), type VARCHAR(20),  age SMALLINT)"
-        let query = Some(
-            "CREATE TABLE species (name VARCHAR(20), type VARCHAR(20),  age SMALLINT)".to_owned(),
-        );
-        let result = parse_table_name(&query);
-        assert_eq!(result, Some("species".to_owned()));
-
-        // test - "CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE)"
-        let query = Some(
-            "CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE)".to_owned(),
-        );
-        let result = parse_table_name(&query);
-        assert_eq!(result, Some("pet".to_owned()));
-
-        // test -  "DROP TABLE `species` /* generated by server */"
-        let query = Some("DROP TABLE `species` /* generated by server */".to_owned());
-        let result = parse_table_name(&query);
-        assert_eq!(result, Some("species".to_owned()));
-    }
 }

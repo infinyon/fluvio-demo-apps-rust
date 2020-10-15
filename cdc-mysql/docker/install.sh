@@ -43,4 +43,5 @@ docker run -p $port:3306 \
     --server-id=1 \
     --log-bin=/var/lib/mysql/binlog.index \
     --binlog-format=row \
+#    --binlog-row-metadata=full \
     --default-authentication-plugin=mysql_native_password

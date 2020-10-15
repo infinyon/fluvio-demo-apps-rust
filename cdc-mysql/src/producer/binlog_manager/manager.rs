@@ -8,7 +8,7 @@ use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
-use tracing::{debug, instrument};
+use tracing::{trace, debug, instrument};
 
 use super::parse_records_from_file;
 use super::IndexFile;
@@ -43,7 +43,7 @@ impl BinLogManager {
             filters: profile.filters(),
             index_file: IndexFile::new(&base_dir, bn_index_file)?,
             current_file: None,
-            db_store: DbStore::new(profile.database()),
+            db_store: DbStore::new(),
             urn: profile.mysql_resource_name().clone(),
         })
     }
@@ -125,7 +125,7 @@ impl BinLogManager {
     #[instrument(skip(self))]
     fn send_current_file_records(&mut self) -> Result<(), CdcError> {
         let current_file = self.current_file.as_ref().unwrap();
-        debug!("Sending file: {:?}", current_file);
+        trace!("Sending file: {:?}", current_file);
 
         let new_offset = parse_records_from_file(
             &self.sender,

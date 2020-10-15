@@ -773,6 +773,7 @@ dependencies = [
  "mysql_binlog",
  "serde",
  "serde_json",
+ "sqlparser",
  "structopt",
  "thiserror",
  "toml",
@@ -2044,6 +2045,15 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "sqlparser"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53fa7478852b3ea28f0d21a42b2d7dade24ba4aa72e22bf66982e4b587a7f608"
+dependencies = [
+ "log",
+]
 
 [[package]]
 name = "stable_deref_trait"

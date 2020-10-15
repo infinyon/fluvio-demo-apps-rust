@@ -1,8 +1,7 @@
 use std::collections::BTreeMap;
+use std::io::{Error, ErrorKind};
 
-use crate::producer::Database;
-use crate::producer::mysql::get_table_columns;
-use crate::error::CdcError;
+use super::binlog_manager::{TableOp, ColumnOp};
 
 type DbName = String;
 type TableName = String;
@@ -10,7 +9,6 @@ type Column = String;
 #[derive(Debug)]
 pub struct DbStore {
     dbs: BTreeMap<DbName, TableStore>,
-    db_params: Database,
 }
 
 #[derive(Debug)]
@@ -33,14 +31,30 @@ impl Default for TableStore {
 }
 
 impl DbStore {
-    pub fn new(db_params: &Database) -> Self {
+    pub fn new() -> Self {
         Self {
             dbs: BTreeMap::new(),
-            db_params: db_params.clone(),
         }
     }
 
-    pub fn save_columns(&mut self, db_name: &str, table_name: &str, columns: &[Column]) {
+    pub fn update_store(&mut self, db_name: &String, table_ops: Vec<TableOp>) -> Result<(), Error> {
+        for table_op in table_ops {
+            match table_op {
+                TableOp::CreateTable(table_name, columns) => {
+                    self.create_table(db_name, table_name, columns)?;
+                }
+                TableOp::AlterTable(table_name, column_op) => {
+                    self.alter_table(db_name, table_name, column_op)?;
+                }
+                TableOp::DropTable(table_names) => {
+                    self.drop_tables(db_name, table_names)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn create_table(&mut self, db_name: &String, table_name: String, columns: Vec<String>) -> Result<(), Error> {
         let table_store = match self.dbs.get_mut(db_name) {
             Some(table_store) => table_store,
             None => {
@@ -49,127 +63,165 @@ impl DbStore {
             }
         };
 
+        if table_store.tables.contains_key(&table_name) {
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                format!("Table {} already exists", table_name)
+            ))
+        }
+
         table_store
             .tables
             .insert(table_name.to_string(), columns.to_owned());
+
+        Ok(())
     }
 
-    #[allow(dead_code)]
-    pub fn has_columns(&self, db_name: &str, table_name: &str) -> bool {
-        if let Some(table_store) = self.dbs.get(db_name) {
-            table_store.tables.contains_key(table_name)
-        } else {
-            false
+    pub fn alter_table(&mut self, db_name: &String, table_name: String, column_op: ColumnOp) -> Result<(), Error> {
+        match column_op {
+            ColumnOp::Add(column_name) => self.add_table_column(db_name, table_name, column_name),
+            ColumnOp::Rename(old_column, new_column)=> self.rename_table_column(db_name, table_name, old_column, new_column),
+            ColumnOp::Drop(column_name) => self.drop_table_column(db_name, table_name, column_name),
         }
+    }
+
+    pub fn drop_tables(&mut self, db_name: &String, table_names: Vec<String>) -> Result<(), Error> {
+        if let Some(table_store) = self.dbs.get_mut(db_name) {
+            for table_name in &table_names {
+                table_store.tables.remove(table_name);
+            }
+
+            if table_store.tables.is_empty() {
+                self.dbs.remove(db_name);
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn add_table_column(&mut self, db_name: &String, table_name: String, column: String) -> Result<(), Error> {
+        if let Some(table_store) = self.dbs.get_mut(db_name) {
+            if let Some(columns) = table_store.tables.get_mut(&table_name) {
+                columns.push(column);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn rename_table_column(&mut self, db_name: &String, table_name: String, old_column: String, new_column: String) -> Result<(), Error> {
+        if let Some(table_store) = self.dbs.get_mut(db_name) {
+            if let Some(columns) = table_store.tables.get_mut(&table_name) {
+                for column in columns.iter_mut() {
+                    if *column == old_column {
+                        *column = new_column.clone();
+                    }
+                }
+            }
+        }        
+        Ok(())
+    }
+
+    pub fn drop_table_column(&mut self, db_name: &String, table_name: String, column: String) -> Result<(), Error> {
+        if let Some(table_store) = self.dbs.get_mut(db_name) {
+            if let Some(columns) = table_store.tables.get_mut(&table_name) {
+                columns.retain(|x| *x != column);
+            }
+        }        
+        Ok(())
     }
 
     pub fn get_columns(
         &mut self,
         db_name: &str,
         table_name: &str,
-    ) -> Result<Vec<String>, CdcError> {
-        // get from local store (if available)
+    ) -> Result<Vec<String>, Error> {
         if let Some(table_store) = self.dbs.get(db_name) {
             if let Some(cols) = table_store.tables.get(table_name) {
                 return Ok(cols.clone());
             }
         };
 
-        let columns = get_table_columns(db_name, table_name, &self.db_params)?;
-        self.save_columns(db_name, table_name, &columns);
-        Ok(columns)
-    }
-
-    pub fn clear_columns(&mut self, db_name: &str, table_name: &str) {
-        if let Some(table_store) = self.dbs.get_mut(db_name) {
-            table_store.tables.remove(table_name);
-        }
+        Err(Error::new(
+            ErrorKind::InvalidData,
+            format!("cannot find columns for table {}::{}", db_name, table_name)
+        ))
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::producer::Database;
-
-    use super::DbStore;
-
+    use super::*;
     #[test]
-    fn test_db_store() {
-        let database = Database::default();
-        let mut db_store = DbStore::new(&database);
-        let db = "flvTest".to_owned();
-        let pet_table = "pet".to_owned();
-        let user_table = "user".to_owned();
+    fn test_update_store() {
+        let mut db_store = DbStore::new();
 
-        // test - add pet columns
-        let some_pet_columns = vec![
-            "name".to_owned(),
-            "owner".to_owned(),
-            "species".to_owned(),
-            "sex".to_owned(),
-            "birth".to_owned(),
-            "death".to_owned(),
-        ];
-        db_store.save_columns(&db, &pet_table, &some_pet_columns);
-        assert_eq!(db_store.has_columns(&db, &pet_table), true);
+        // db: create pet values(c1, c2, c3) => ok
+        let op = TableOp::CreateTable("pet".to_owned(), vec!["c1".to_owned(), "c2".to_owned(), "c3".to_owned()]);
+        let result = db_store.update_store(&"db".to_owned(), vec![op]);
+        let expected_result = "{\"db\": TableStore { tables: {\"pet\": [\"c1\", \"c2\", \"c3\"]} }}";
+        assert!(result.is_ok());
+        assert_eq!(format!("{:?}", db_store.dbs), expected_result);
 
-        let columns = db_store.get_columns(&db, &pet_table);
-        assert!(columns.is_ok());
-        assert_eq!(columns.unwrap(), some_pet_columns);
+        // db: create pet values(c1) => error (table already exists)
+        let op = TableOp::CreateTable("pet".to_owned(), vec!["c1".to_owned()]);
+        let result = db_store.update_store(&"db".to_owned(), vec![op]);
+        assert!(result.is_err());
+        assert_eq!(format!("{:?}", db_store.dbs), expected_result);
 
-        // test - update pet columns
-        let other_pet_columns = vec![
-            "name".to_owned(),
-            "kind".to_owned(),
-            "sex".to_owned(),
-            "birth".to_owned(),
-            "death".to_owned(),
-        ];
-        db_store.save_columns(&db, &pet_table, &other_pet_columns);
-        assert_eq!(db_store.has_columns(&db, &pet_table), true);
+        // db: create pet2 values(c1) => ok
+        let op = TableOp::CreateTable("pet2".to_owned(), vec!["c1".to_owned()]);
+        let result = db_store.update_store(&"db".to_owned(), vec![op]);
+        let expected_result = "{\"db\": TableStore { tables: {\"pet\": [\"c1\", \"c2\", \"c3\"], \"pet2\": [\"c1\"]} }}";
+        assert!(result.is_ok());
+        assert_eq!(format!("{:?}", db_store.dbs), expected_result);
 
-        let columns = db_store.get_columns(&db, &pet_table);
-        assert!(columns.is_ok());
-        assert_eq!(columns.unwrap(), other_pet_columns);
+        // db2: create pet2 values(c1) => ok
+        let op = TableOp::CreateTable("pet2".to_owned(), vec!["c1".to_owned()]);
+        let result = db_store.update_store(&"db2".to_owned(), vec![op]);
+        let expected_result = "{\"db\": TableStore { tables: {\"pet\": [\"c1\", \"c2\", \"c3\"], \"pet2\": [\"c1\"]} }, \"db2\": TableStore { tables: {\"pet2\": [\"c1\"]} }}";
+        assert!(result.is_ok());
+        assert_eq!(format!("{:?}", db_store.dbs), expected_result);
+        
+        // db2: drop pet2  => ok
+        let op = TableOp::DropTable(vec!["pet2".to_owned()]);
+        let result = db_store.update_store(&"db2".to_owned(), vec![op]);
+        let expected_result = "{\"db\": TableStore { tables: {\"pet\": [\"c1\", \"c2\", \"c3\"], \"pet2\": [\"c1\"]} }}";
+        assert!(result.is_ok());
+        assert_eq!(format!("{:?}", db_store.dbs), expected_result);
 
-        // test - add user columns
-        let some_user_columns = vec![
-            "first_name".to_owned(),
-            "last_name".to_owned(),
-            "sex".to_owned(),
-            "birth".to_owned(),
-        ];
-        db_store.save_columns(&db, &user_table, &some_user_columns);
-        assert_eq!(db_store.has_columns(&db, &user_table), true);
-        assert_eq!(db_store.has_columns(&db, &pet_table), true);
+        // db: drop pet2  => ok
+        let op = TableOp::DropTable(vec!["pet2".to_owned()]);
+        let result = db_store.update_store(&"db".to_owned(), vec![op]);
+        let expected_result = "{\"db\": TableStore { tables: {\"pet\": [\"c1\", \"c2\", \"c3\"]} }}";
+        assert!(result.is_ok());
+        assert_eq!(format!("{:?}", db_store.dbs), expected_result); 
 
-        let columns = db_store.get_columns(&db, &user_table);
-        assert!(columns.is_ok());
-        assert_eq!(columns.unwrap(), some_user_columns);
-
-        let store_dump = format!("{:?}", db_store.dbs);
-        assert_eq!(store_dump, "{\"flvTest\": TableStore { tables: {\"pet\": [\"name\", \"kind\", \"sex\", \"birth\", \"death\"], \"user\": [\"first_name\", \"last_name\", \"sex\", \"birth\"]} }}");
-
-        // test - clear user columns
-        db_store.clear_columns(&db, &user_table);
-        assert_eq!(db_store.has_columns(&db, &user_table), false);
-        assert_eq!(db_store.has_columns(&db, &pet_table), true);
-
-        let store_dump = format!("{:?}", db_store.dbs);
-        assert_eq!(store_dump, "{\"flvTest\": TableStore { tables: {\"pet\": [\"name\", \"kind\", \"sex\", \"birth\", \"death\"]} }}");
-
-        //test clear pet columns
-        db_store.clear_columns(&db, &pet_table);
-        assert_eq!(db_store.has_columns(&db, &user_table), false);
-        assert_eq!(db_store.has_columns(&db, &pet_table), false);
-
-        let store_dump = format!("{:?}", db_store.dbs);
-        assert_eq!(store_dump, "{\"flvTest\": TableStore { tables: {} }}");
-
-        // add pet one more time.
-        db_store.save_columns(&db, &pet_table, &some_pet_columns);
-
-        let store_dump = format!("{:?}", db_store.dbs);
-        assert_eq!(store_dump, "{\"flvTest\": TableStore { tables: {\"pet\": [\"name\", \"owner\", \"species\", \"sex\", \"birth\", \"death\"]} }}");
+        // db: alter pet (add column c4)  => ok
+        let op = TableOp::AlterTable("pet".to_owned(), ColumnOp::Add("c4".to_owned()));
+        let result = db_store.update_store(&"db".to_owned(), vec![op]);
+        let expected_result = "{\"db\": TableStore { tables: {\"pet\": [\"c1\", \"c2\", \"c3\", \"c4\"]} }}";
+        assert!(result.is_ok());
+        assert_eq!(format!("{:?}", db_store.dbs), expected_result);     
+        
+        // db: alter pet (rename column c3 to c55)  => ok
+        let op = TableOp::AlterTable("pet".to_owned(), ColumnOp::Rename("c3".to_owned(), "c55".to_owned()));
+        let result = db_store.update_store(&"db".to_owned(), vec![op]);
+        let expected_result = "{\"db\": TableStore { tables: {\"pet\": [\"c1\", \"c2\", \"c55\", \"c4\"]} }}";
+        assert!(result.is_ok());
+        assert_eq!(format!("{:?}", db_store.dbs), expected_result);   
+        
+        // db: alter pet (drop column c4)  => ok
+        let op = TableOp::AlterTable("pet".to_owned(), ColumnOp::Drop("c4".to_owned()));
+        let result = db_store.update_store(&"db".to_owned(), vec![op]);
+        let expected_result = "{\"db\": TableStore { tables: {\"pet\": [\"c1\", \"c2\", \"c55\"]} }}";
+        assert!(result.is_ok());
+        assert_eq!(format!("{:?}", db_store.dbs), expected_result);     
+        
+       // db: alter pet (drop column c2)  => ok
+       let op = TableOp::AlterTable("pet".to_owned(), ColumnOp::Drop("c2".to_owned()));
+       let result = db_store.update_store(&"db".to_owned(), vec![op]);
+       let expected_result = "{\"db\": TableStore { tables: {\"pet\": [\"c1\", \"c55\"]} }}";
+       assert!(result.is_ok());
+       assert_eq!(format!("{:?}", db_store.dbs), expected_result);           
     }
 }

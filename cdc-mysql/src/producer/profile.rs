@@ -43,17 +43,8 @@ pub struct Profile {
     binlog_index_file: PathBuf,
     mysql_resource_name: String,
     resume_offset_file: PathBuf,
-    database: Database,
     filters: Option<Filters>,
     fluvio: Option<Fluvio>,
-}
-
-#[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
-pub struct Database {
-    ip_or_host: String,
-    port: Option<u16>,
-    user: String,
-    password: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -104,10 +95,6 @@ impl Profile {
         &self.mysql_resource_name
     }
 
-    pub fn database(&self) -> &Database {
-        &self.database
-    }
-
     pub fn filters(&self) -> Option<Filters> {
         self.filters.clone()
     }
@@ -127,24 +114,6 @@ impl Profile {
             }
         }
         DEFAULT_REPLICAS
-    }
-}
-
-impl Database {
-    pub fn ip_or_host(&self) -> Option<String> {
-        Some(self.ip_or_host.clone())
-    }
-
-    pub fn port(&self) -> u16 {
-        self.port.unwrap_or(3306)
-    }
-
-    pub fn user(&self) -> Option<String> {
-        Some(self.user.clone())
-    }
-
-    pub fn password(&self) -> Option<String> {
-        self.password.clone()
     }
 }
 
