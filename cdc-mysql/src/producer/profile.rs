@@ -6,6 +6,8 @@ use std::fs::read_to_string;
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
+use crate::util::expand_tilde;
+
 const DEFAULT_TOPIC: &str = "rust-mysql-cdc";
 const DEFAULT_REPLICAS: i16 = 1;
 pub struct Config {
@@ -29,6 +31,13 @@ impl Config {
 
         profile.filters.as_mut().map(|filter| filter.normalize());
 
+        if let Some(base_path) = expand_tilde(&profile.data.base_path) {
+            profile.data.base_path = base_path;
+            profile.data.binlog_index_file = profile.data.base_path.join( profile.data.binlog_index_file);
+            profile.data.resume_offset_file = profile.data.base_path.join( profile.data.resume_offset_file);
+            profile.data.local_store_file = profile.data.base_path.join( profile.data.local_store_file);
+        }
+
         Ok(Self { profile })
     }
 
@@ -40,12 +49,17 @@ impl Config {
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Profile {
-    binlog_index_file: PathBuf,
-    mysql_resource_name: String,
-    resume_offset_file: PathBuf,
-    local_store_file: PathBuf,
-    filters: Option<Filters>,
-    fluvio: Option<Fluvio>,
+    pub mysql_resource_name: String,
+    pub data: Data,
+    pub filters: Option<Filters>,
+    pub fluvio: Option<Fluvio>,
+}
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
+pub struct Data {
+    pub base_path: PathBuf,
+    pub binlog_index_file: PathBuf,
+    pub resume_offset_file: PathBuf,
+    pub local_store_file: PathBuf,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -81,19 +95,19 @@ pub struct Fluvio {
 impl Profile {
     #[allow(dead_code)] // used in unit
     pub fn set_binlog_index_file(&mut self, bn_file_idx: PathBuf) {
-        self.binlog_index_file = bn_file_idx;
+        self.data.binlog_index_file = bn_file_idx;
     }
 
     pub fn binlog_index_file(&self) -> &PathBuf {
-        &self.binlog_index_file
+        &self.data.binlog_index_file
     }
 
     pub fn resume_offset_file(&self) -> &Path {
-        &self.resume_offset_file
+        &self.data.resume_offset_file
     }
 
     pub fn local_store_file(&self) -> &Path {
-        &self.local_store_file
+        &self.data.local_store_file
     }
 
     pub fn mysql_resource_name(&self) -> &String {
@@ -125,6 +139,94 @@ impl Profile {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const TEST_PATH: &str = "test_files";
+    const PROFILE_FULL: &str = "producer_profile_full.toml";
+    const PROFILE_MIN: &str = "producer_profile_min.toml";
+
+    fn get_base_dir() -> PathBuf {
+        let program_dir = std::env::current_dir().unwrap();
+        program_dir.join(TEST_PATH)
+    }
+
+    #[test]
+    fn test_full_producer_profile() {
+        let mysql_resource_name = ("mysql-docker-80").to_owned();
+        let base_path = expand_tilde(&PathBuf::from("~/data")).unwrap();
+        let binlog_index_file = PathBuf::from("binlog.index");
+        let resume_offset_file = PathBuf::from("producer.offset");
+        let local_store_file = PathBuf::from("producer.store");
+        let profile_path = get_base_dir().join(PROFILE_FULL);
+        let profile_file = Config::load(&profile_path);
+
+        if let Err(err) = &profile_file {
+            println!("{:?}", err);
+        };
+
+        assert!(profile_file.is_ok());
+        let expected = Profile {
+            mysql_resource_name: mysql_resource_name.clone(),
+            data: Data {
+                base_path: base_path.clone(),
+                binlog_index_file: base_path.join(binlog_index_file.clone()),
+                resume_offset_file: base_path.join( resume_offset_file.clone()),
+                local_store_file: base_path.join(local_store_file.clone()),
+            },
+            filters: Some(Filters::Include {
+                include_dbs: vec!["flvtest".to_owned()],
+            }),
+            fluvio: Some(Fluvio {
+                topic: "rust-mysql-cdc".to_owned(),
+                replicas: Some(2),
+            }),
+        };
+
+        let profile = profile_file.as_ref().unwrap().profile();
+        assert_eq!(profile, &expected);
+        assert_eq!(profile.mysql_resource_name(), &mysql_resource_name);
+        assert_eq!(profile.binlog_index_file(), &base_path.join(binlog_index_file.clone()));
+        assert_eq!(profile.resume_offset_file(), &base_path.join(resume_offset_file.clone()));
+        assert_eq!(profile.local_store_file(), &base_path.join(local_store_file.clone()));
+        assert_eq!(profile.topic(), "rust-mysql-cdc".to_owned());
+        assert_eq!(profile.replicas(), 2);
+    }
+
+    #[test]
+    fn test_min_producer_profile() {
+        let mysql_resource_name = ("mysql-local").to_owned();
+        let base_path = expand_tilde(&PathBuf::from("~/mysql-cdc/producer")).unwrap();
+        let binlog_index_file = PathBuf::from("binlog.index");
+        let resume_offset_file = PathBuf::from("producer.offset");
+        let local_store_file = PathBuf::from("producer.store");
+        let profile_path = get_base_dir().join(PROFILE_MIN);
+        let profile_file = Config::load(&profile_path);
+
+        if let Err(err) = &profile_file {
+            println!("{:?}", err);
+        };
+
+        assert!(profile_file.is_ok());
+        let expected = Profile {
+            mysql_resource_name: mysql_resource_name.clone(),
+            data: Data {
+                base_path: base_path.clone(),
+                binlog_index_file: base_path.join(binlog_index_file.clone()),
+                resume_offset_file: base_path.join( resume_offset_file.clone()),
+                local_store_file: base_path.join(local_store_file.clone()),
+            },
+            filters: None,
+            fluvio: None,
+        };
+
+        let profile = profile_file.as_ref().unwrap().profile();
+        assert_eq!(profile, &expected);
+        assert_eq!(profile.mysql_resource_name(), &mysql_resource_name);
+        assert_eq!(profile.binlog_index_file(), &base_path.join(binlog_index_file.clone()));
+        assert_eq!(profile.resume_offset_file(), &base_path.join(resume_offset_file.clone()));
+        assert_eq!(profile.local_store_file(), &base_path.join(local_store_file.clone()));
+        assert_eq!(profile.topic(), "rust-mysql-cdc".to_owned());
+        assert_eq!(profile.replicas(), 1);
+    }
 
     #[test]
     fn test_normalize_filter() {

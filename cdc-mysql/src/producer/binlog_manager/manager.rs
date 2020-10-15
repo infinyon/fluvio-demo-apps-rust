@@ -209,9 +209,10 @@ fn get_base_path_and_file_tuple(bn_file_path: &PathBuf) -> Result<(PathBuf, Stri
 mod test {
     use crossbeam_channel::bounded;
     use std::path::PathBuf;
+    use std::fs;
 
     use crate::messages::BnFile;
-    use crate::producer::Profile;
+    use crate::producer::{Profile, Data};
 
     use super::BinLogFile;
     use super::BinLogManager;
@@ -221,6 +222,8 @@ mod test {
     const BL_INDEX: &str = "binlog.index";
     const BL_FILE1: &str = "binlog.000001";
     const BL_FILE2: &str = "binlog.000002";
+    const LOCAL_STORE: &str = "local.store";
+    const RESUME_OFFSET: &str = "resume.offset";
 
     fn get_base_dir() -> PathBuf {
         let program_dir = std::env::current_dir().unwrap();
@@ -228,9 +231,23 @@ mod test {
     }
 
     fn build_profile() -> Profile {
-        let mut profile = Profile::default();
-        profile.set_binlog_index_file(get_base_dir().join(BL_INDEX));
-        profile
+        let base_path = get_base_dir();
+        Profile {
+            mysql_resource_name: "mysql_resource".to_owned(),
+            data: Data {
+                base_path: base_path.clone(),
+                binlog_index_file: base_path.join(BL_INDEX),
+                resume_offset_file: base_path.join( LOCAL_STORE),
+                local_store_file: base_path.join(RESUME_OFFSET),
+            },
+            filters: None,
+            fluvio: None,
+        }
+    }
+
+    fn clean_up(profile: &Profile) {
+        let _ = fs::remove_file(profile.resume_offset_file());
+        let _ = fs::remove_file(profile.local_store_file());
     }
 
     #[test]
@@ -287,5 +304,7 @@ mod test {
             fm.current_file.as_ref().unwrap(),
             bn_file_res.as_ref().unwrap()
         );
+
+        clean_up(&profile);
     }
 }

@@ -1,7 +1,10 @@
 mysql_resource_name = "mysql-docker-80"
-binlog_index_file = "~/mysql-data/mysql-80/binlog.index"
-resume_offset_file = "~/mysql-cdc/producer.offset"
-local_store_file = "~/mysql-cdc/producer.store"
+
+[data]
+base_path = "~/data"
+binlog_index_file = "binlog.index"
+resume_offset_file = "producer.offset"
+local_store_file = "producer.store"
 
 [filters]
 include_dbs = [ "flvTest" ]

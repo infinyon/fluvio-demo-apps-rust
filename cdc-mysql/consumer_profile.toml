@@ -3,9 +3,14 @@
 ##
 
 ##
-# File to save last read offset of the Fluvio stream. If consumer restarts, it resumes reading from this offset.
+# Data Path (mysql container mapped to local drive)
+#
+# last_offset_file: consumer resumes from here after restart
+#
 ##
-last_offset_file = "~/mysql-cdc/consumer.offset"
+[data]
+base_path = "~/mysql-cdc/mysql-consumer"
+last_offset_file = "consumer.offset"
 
 ##
 # Mysql database settings
@@ -15,6 +20,13 @@ ip_or_host = "0.0.0.0"
 port = 3090
 user = "fluvio"
 password ="fluvio4cdc!"
+
+##
+# Container configuration (used by ./docker scripts)
+##
+[container]
+name = "mysql-consumer"
+host_port = 3090
 
 ##
 # Filters to include or exclude databases

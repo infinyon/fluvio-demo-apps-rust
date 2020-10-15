@@ -1,4 +1,5 @@
 #!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 helpFunction()
 {
@@ -31,7 +32,7 @@ fi
 mkdir -p $path
 
 # Build iamge
-docker build . -t mysql-80
+docker build "$DIR" -t mysql-80
 
 # Run Image
 docker run -p $port:3306 \
