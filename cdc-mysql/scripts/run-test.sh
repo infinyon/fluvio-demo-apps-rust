@@ -5,6 +5,8 @@ CONSUMER_PROFILE="$DIR/../consumer_profile.toml"
 MYSQL_HOST="0.0.0.0"
 MYSQL_USER="fluvio"
 MYSQL_PASSWORD="fluvio4cdc!"
+#SUPPRESS_ERRORS="2>/dev/null" 
+SUPPRESS_ERRORS="" 
 
 SQL_COMMANDS=("CREATE DATABASE flvDb;")
 SQL_COMMANDS+=("use flvDb; CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE);")
@@ -86,7 +88,7 @@ mysql_producer="mysql -h $MYSQL_HOST -P $mysql_producer_port -u$MYSQL_USER -p$MY
 #Run SQL Commands
 for sql in "${SQL_COMMANDS[@]}"
 do
-    result=$($mysql_producer -e "$sql" 2>/dev/null)
+    result=$($mysql_producer -e "$sql" $SUPPRESS_ERRORS)
     ret_code=$?
     if [ $ret_code -gt 0 ]; then
         echo " ❌ mysql command '$mysql_producer -e \"$sql\"' - failed"
@@ -141,7 +143,7 @@ mysql_consumer="mysql -h $MYSQL_HOST -P $mysql_consumer_port -u$MYSQL_USER -p$MY
 
 # Compare pet table
 sql="use flvDb; select * from pet;"
-result=$($mysql_consumer -e "$sql" 2>/dev/null)
+result=$($mysql_consumer -e "$sql" $SUPPRESS_ERRORS)
 ret_code=$?
 if [ $ret_code -gt 0 ]; then
     echo " ❌ mysql command '$mysql_consumer -e \"$sql\"' - failed"
