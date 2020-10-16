@@ -2,15 +2,15 @@ use crossbeam_channel::Sender;
 use mysql_binlog::event::TypeCode;
 use mysql_binlog::{parse_file, BinlogEvent};
 use std::io::{Error, ErrorKind};
-use tracing::{trace, debug, instrument};
+use tracing::{debug, instrument, trace};
 
-use crate::producer::Filters;
 use crate::error::CdcError;
 use crate::messages::{BeforeAfterCols, BinLogMessage, Cols, Operation};
 use crate::messages::{DeleteRows, UpdateRows, WriteRows};
+use crate::producer::Filters;
 
-use super::LocalStore;
 use super::parse_query;
+use super::LocalStore;
 
 #[instrument(skip(sender, log_file, offset, filters, local_store))]
 pub fn parse_records_from_file(
@@ -83,8 +83,12 @@ fn event_to_message(
     match event.type_code {
         TypeCode::QueryEvent => process_query_event(event, file_name, local_store, urn),
         TypeCode::WriteRowsEventV2 => process_write_rows_event(event, file_name, local_store, urn),
-        TypeCode::UpdateRowsEventV2 => process_update_rows_event(event, file_name, local_store, urn),
-        TypeCode::DeleteRowsEventV2 => process_delete_rows_event(event, file_name, local_store, urn),
+        TypeCode::UpdateRowsEventV2 => {
+            process_update_rows_event(event, file_name, local_store, urn)
+        }
+        TypeCode::DeleteRowsEventV2 => {
+            process_delete_rows_event(event, file_name, local_store, urn)
+        }
         _ => Err(to_err(format!(
             "Warning: Event '{:?}' skipped (evt2msg)",
             event.type_code

@@ -2,9 +2,9 @@ use std::io::Error as IoError;
 use thiserror::Error;
 
 use fluvio::FluvioError;
-use serde_json::Error as JsonError;
-use mysql_binlog::errors::BinlogParseError;
 use mysql::Error as MysqlError;
+use mysql_binlog::errors::BinlogParseError;
+use serde_json::Error as JsonError;
 use sqlparser::parser::ParserError;
 
 #[derive(Error, Debug)]
@@ -35,19 +35,11 @@ pub enum CdcError {
         source: MysqlError,
     },
     #[error("Resume file error")]
-    ResumeError {
-        source: IoError,
-    },
+    ResumeError { source: IoError },
     #[error("Binlog file error")]
-    BinlogFileError {
-        source: IoError,
-    },
+    BinlogFileError { source: IoError },
     #[error("CDC config error")]
-    ConfigError {
-        source: IoError,
-    },
+    ConfigError { source: IoError },
     #[error("Sql Parser error")]
-    SqlParserError {
-        source: ParserError,
-    }    
+    SqlParserError { source: ParserError },
 }

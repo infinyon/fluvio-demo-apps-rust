@@ -35,7 +35,8 @@ impl Config {
 
         if let Some(base_path) = expand_tilde(&profile.data.base_path) {
             profile.data.base_path = base_path;
-            profile.data.last_offset_file = profile.data.base_path.join( profile.data.last_offset_file);
+            profile.data.last_offset_file =
+                profile.data.base_path.join(profile.data.last_offset_file);
         }
 
         Ok(Self { profile })
@@ -57,7 +58,7 @@ pub struct Profile {
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Data {
     base_path: PathBuf,
-    last_offset_file: PathBuf
+    last_offset_file: PathBuf,
 }
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
@@ -99,7 +100,7 @@ pub struct Fluvio {
 
 impl Profile {
     pub fn last_offset_file(&self) -> &PathBuf {
-        &self.data.last_offset_file 
+        &self.data.last_offset_file
     }
 
     pub fn ip_or_host(&self) -> Option<String> {
@@ -178,7 +179,10 @@ pub mod test {
 
         let profile = profile_file.as_ref().unwrap().profile();
         assert_eq!(profile, &expected);
-        assert_eq!(profile.last_offset_file(), &base_path.join(last_offset_file.clone()));
+        assert_eq!(
+            profile.last_offset_file(),
+            &base_path.join(last_offset_file.clone())
+        );
         assert_eq!(profile.ip_or_host(), Some("localhost".to_owned()));
         assert_eq!(profile.port(), 3306);
         assert_eq!(profile.user(), Some("root".to_owned()));
@@ -189,7 +193,7 @@ pub mod test {
     #[test]
     fn test_min_profile() {
         let base_path = PathBuf::from("/tmp/data");
-        let last_offset_file = PathBuf::from("consumer2.offset");        
+        let last_offset_file = PathBuf::from("consumer2.offset");
         let profile_path = get_base_dir().join(PROFILE_MIN);
         let profile_file = Config::load(&profile_path);
 
@@ -215,7 +219,10 @@ pub mod test {
 
         let profile = profile_file.as_ref().unwrap().profile();
         assert_eq!(profile, &expected);
-        assert_eq!(profile.last_offset_file(), &base_path.join(last_offset_file.clone()));
+        assert_eq!(
+            profile.last_offset_file(),
+            &base_path.join(last_offset_file.clone())
+        );
         assert_eq!(profile.ip_or_host(), Some("localhost".to_owned()));
         assert_eq!(profile.port(), 3306);
         assert_eq!(profile.user(), Some("root".to_owned()));

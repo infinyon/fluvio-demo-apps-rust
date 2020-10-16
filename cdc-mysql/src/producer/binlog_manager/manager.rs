@@ -8,12 +8,12 @@ use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
-use tracing::{trace, debug, instrument};
+use tracing::{debug, instrument, trace};
 
 use super::parse_records_from_file;
 use super::IndexFile;
-use super::Resume;
 use super::LocalStore;
+use super::Resume;
 use super::{get_file_id, BinLogFile};
 use crate::error::CdcError;
 use crate::producer::{Filters, Profile};
@@ -208,11 +208,11 @@ fn get_base_path_and_file_tuple(bn_file_path: &PathBuf) -> Result<(PathBuf, Stri
 #[cfg(test)]
 mod test {
     use crossbeam_channel::bounded;
-    use std::path::PathBuf;
     use std::fs;
+    use std::path::PathBuf;
 
     use crate::messages::BnFile;
-    use crate::producer::{Profile, Data};
+    use crate::producer::{Data, Profile};
 
     use super::BinLogFile;
     use super::BinLogManager;
@@ -237,7 +237,7 @@ mod test {
             data: Data {
                 base_path: base_path.clone(),
                 binlog_index_file: base_path.join(BL_INDEX),
-                resume_offset_file: base_path.join( LOCAL_STORE),
+                resume_offset_file: base_path.join(LOCAL_STORE),
                 local_store_file: base_path.join(RESUME_OFFSET),
             },
             filters: None,

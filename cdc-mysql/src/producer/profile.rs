@@ -35,9 +35,12 @@ impl Config {
 
         if let Some(base_path) = expand_tilde(&profile.data.base_path) {
             profile.data.base_path = base_path;
-            profile.data.binlog_index_file = profile.data.base_path.join( profile.data.binlog_index_file);
-            profile.data.resume_offset_file = profile.data.base_path.join( profile.data.resume_offset_file);
-            profile.data.local_store_file = profile.data.base_path.join( profile.data.local_store_file);
+            profile.data.binlog_index_file =
+                profile.data.base_path.join(profile.data.binlog_index_file);
+            profile.data.resume_offset_file =
+                profile.data.base_path.join(profile.data.resume_offset_file);
+            profile.data.local_store_file =
+                profile.data.base_path.join(profile.data.local_store_file);
         }
 
         Ok(Self { profile })
@@ -171,7 +174,7 @@ mod tests {
             data: Data {
                 base_path: base_path.clone(),
                 binlog_index_file: base_path.join(binlog_index_file.clone()),
-                resume_offset_file: base_path.join( resume_offset_file.clone()),
+                resume_offset_file: base_path.join(resume_offset_file.clone()),
                 local_store_file: base_path.join(local_store_file.clone()),
             },
             filters: Some(Filters::Include {
@@ -186,9 +189,18 @@ mod tests {
         let profile = profile_file.as_ref().unwrap().profile();
         assert_eq!(profile, &expected);
         assert_eq!(profile.mysql_resource_name(), &mysql_resource_name);
-        assert_eq!(profile.binlog_index_file(), &base_path.join(binlog_index_file.clone()));
-        assert_eq!(profile.resume_offset_file(), &base_path.join(resume_offset_file.clone()));
-        assert_eq!(profile.local_store_file(), &base_path.join(local_store_file.clone()));
+        assert_eq!(
+            profile.binlog_index_file(),
+            &base_path.join(binlog_index_file.clone())
+        );
+        assert_eq!(
+            profile.resume_offset_file(),
+            &base_path.join(resume_offset_file.clone())
+        );
+        assert_eq!(
+            profile.local_store_file(),
+            &base_path.join(local_store_file.clone())
+        );
         assert_eq!(profile.topic(), "rust-mysql-cdc".to_owned());
         assert_eq!(profile.replicas(), 2);
     }
@@ -213,7 +225,7 @@ mod tests {
             data: Data {
                 base_path: base_path.clone(),
                 binlog_index_file: base_path.join(binlog_index_file.clone()),
-                resume_offset_file: base_path.join( resume_offset_file.clone()),
+                resume_offset_file: base_path.join(resume_offset_file.clone()),
                 local_store_file: base_path.join(local_store_file.clone()),
             },
             filters: None,
@@ -223,9 +235,18 @@ mod tests {
         let profile = profile_file.as_ref().unwrap().profile();
         assert_eq!(profile, &expected);
         assert_eq!(profile.mysql_resource_name(), &mysql_resource_name);
-        assert_eq!(profile.binlog_index_file(), &base_path.join(binlog_index_file.clone()));
-        assert_eq!(profile.resume_offset_file(), &base_path.join(resume_offset_file.clone()));
-        assert_eq!(profile.local_store_file(), &base_path.join(local_store_file.clone()));
+        assert_eq!(
+            profile.binlog_index_file(),
+            &base_path.join(binlog_index_file.clone())
+        );
+        assert_eq!(
+            profile.resume_offset_file(),
+            &base_path.join(resume_offset_file.clone())
+        );
+        assert_eq!(
+            profile.local_store_file(),
+            &base_path.join(local_store_file.clone())
+        );
         assert_eq!(profile.topic(), "rust-mysql-cdc".to_owned());
         assert_eq!(profile.replicas(), 1);
     }
