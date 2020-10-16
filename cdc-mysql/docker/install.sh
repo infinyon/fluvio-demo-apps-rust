@@ -29,13 +29,25 @@ then
 fi
 
 # Create directory
-mkdir -p $path
+eval "mkdir -p $path"
+if [ -d `eval echo $path` ]; then
+   echo " ✅ mkdir -p $path - ok"
+else
+   echo " ❌ mkdir -p $path - failed"
+   exit 1
+fi
 
-# Build iamge
-docker build "$DIR" -t mysql-80
+# Build docker image
+eval "docker build $DIR -t mysql-80 2> /dev/null"
+if [[ ! "$(docker images -q mysql-80 2> /dev/null)" == "" ]]; then
+   echo " ✅ docker build . -t mysql-80 - ok"
+else
+   echo " ❌ docker build . -t mysql-80 - failed"
+   exit 1
+fi
 
 # Run Image
-docker run -p $port:3306 \
+eval "docker run -p $port:3306 \
     -v $path:/var/lib/mysql \
     -v scripts:/docker-entrypoint-initdb.d/ \
     --name $name \
@@ -45,4 +57,11 @@ docker run -p $port:3306 \
     --log-bin=/var/lib/mysql/binlog.index \
     --binlog-format=row \
 #    --binlog-row-metadata=full \
-    --default-authentication-plugin=mysql_native_password
+    --default-authentication-plugin=mysql_native_password 2> /dev/null"
+RUNNING=$(docker inspect --format="{{.State.Running}}" $name 2> /dev/null)
+if [ "$RUNNING" == "true" ]; then
+   echo " ✅ docker $name - running"
+else
+   echo " ❌ docker run failed - try again"
+   exit 1
+fi

@@ -15,7 +15,7 @@ mysql_resource_name = "mysql-srv1"
 # local_store_file: table column headers are accumulated here
 ##
 [data]
-base_path = "~/mysql-cd/cysql-producer"
+base_path = "~/mysql-cdc/mysql-producer"
 binlog_index_file = "binlog.index"
 resume_offset_file = "producer.offset"
 local_store_file = "producer.store"
