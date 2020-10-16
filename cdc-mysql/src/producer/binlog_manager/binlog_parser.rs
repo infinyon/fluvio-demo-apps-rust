@@ -277,10 +277,7 @@ fn same_offset(local_offset: Option<u64>, event_offset: u64) -> bool {
 
 fn skip_query_event(query: &Option<String>) -> bool {
     if let Some(query) = query {
-        return match query.to_lowercase().as_str() {
-            "begin" => true,
-            _ => false,
-        };
+        return query.to_lowercase().as_str() == "begin";
     }
     true
 }

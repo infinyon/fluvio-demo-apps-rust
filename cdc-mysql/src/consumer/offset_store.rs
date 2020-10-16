@@ -60,8 +60,8 @@ async fn write_offset(file: &PathBuf, offset: i64) -> Result<(), Error> {
 
 #[cfg(test)]
 mod test {
-    use std::fs;
     use super::*;
+    use std::fs;
 
     const TEST_PATH: &str = "test_files";
     const OFFSET_FILE: &str = "offset_file.offset";

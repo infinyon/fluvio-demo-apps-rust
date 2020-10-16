@@ -29,7 +29,9 @@ impl Config {
         let mut profile: Profile = toml::from_str(&file_str)
             .map_err(|err| Error::new(ErrorKind::InvalidData, format!("{}", err)))?;
 
-        profile.filters.as_mut().map(|filter| filter.normalize());
+        if let Some(filter) = profile.filters.as_mut() {
+            filter.normalize();
+        }
 
         if let Some(base_path) = expand_tilde(&profile.data.base_path) {
             profile.data.base_path = base_path;
@@ -80,7 +82,7 @@ impl Filters {
                 for name in include_dbs {
                     name.make_ascii_lowercase();
                 }
-            },
+            }
             Self::Exclude { exclude_dbs } => {
                 for name in exclude_dbs {
                     name.make_ascii_lowercase()
