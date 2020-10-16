@@ -44,6 +44,6 @@ eval "rm -rf $path >/dev/null 2>&1"
 if [ ! -d `eval echo $path` ]; then
    echo " ✅ rm -rf $path - ok"
 else
-   echo " ❌ rm -p $path - failed"
+   echo " ❌ rm -rf $path - failed"
    exit 1
 fi
