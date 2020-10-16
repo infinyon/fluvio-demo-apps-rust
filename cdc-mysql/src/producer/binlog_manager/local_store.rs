@@ -107,9 +107,7 @@ impl DbStore {
             ));
         }
 
-        table_store
-            .tables
-            .insert(table_name, columns);
+        table_store.tables.insert(table_name, columns);
 
         Ok(())
     }
