@@ -191,15 +191,15 @@ mod tests {
         assert_eq!(profile.mysql_resource_name(), &mysql_resource_name);
         assert_eq!(
             profile.binlog_index_file(),
-            &base_path.join(binlog_index_file.clone())
+            &base_path.join(binlog_index_file)
         );
         assert_eq!(
             profile.resume_offset_file(),
-            &base_path.join(resume_offset_file.clone())
+            &base_path.join(resume_offset_file)
         );
         assert_eq!(
             profile.local_store_file(),
-            &base_path.join(local_store_file.clone())
+            &base_path.join(local_store_file)
         );
         assert_eq!(profile.topic(), "rust-mysql-cdc".to_owned());
         assert_eq!(profile.replicas(), 2);
@@ -237,15 +237,15 @@ mod tests {
         assert_eq!(profile.mysql_resource_name(), &mysql_resource_name);
         assert_eq!(
             profile.binlog_index_file(),
-            &base_path.join(binlog_index_file.clone())
+            &base_path.join(binlog_index_file)
         );
         assert_eq!(
             profile.resume_offset_file(),
-            &base_path.join(resume_offset_file.clone())
+            &base_path.join(resume_offset_file)
         );
         assert_eq!(
             profile.local_store_file(),
-            &base_path.join(local_store_file.clone())
+            &base_path.join(local_store_file)
         );
         assert_eq!(profile.topic(), "rust-mysql-cdc".to_owned());
         assert_eq!(profile.replicas(), 1);

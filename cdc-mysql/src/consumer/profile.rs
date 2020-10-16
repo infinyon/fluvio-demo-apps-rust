@@ -181,7 +181,7 @@ pub mod test {
         assert_eq!(profile, &expected);
         assert_eq!(
             profile.last_offset_file(),
-            &base_path.join(last_offset_file.clone())
+            &base_path.join(last_offset_file)
         );
         assert_eq!(profile.ip_or_host(), Some("localhost".to_owned()));
         assert_eq!(profile.port(), 3306);
@@ -221,7 +221,7 @@ pub mod test {
         assert_eq!(profile, &expected);
         assert_eq!(
             profile.last_offset_file(),
-            &base_path.join(last_offset_file.clone())
+            &base_path.join(last_offset_file)
         );
         assert_eq!(profile.ip_or_host(), Some("localhost".to_owned()));
         assert_eq!(profile.port(), 3306);
