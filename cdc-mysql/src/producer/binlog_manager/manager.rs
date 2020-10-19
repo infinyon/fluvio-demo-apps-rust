@@ -8,7 +8,7 @@ use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
-use tracing::{debug, instrument, trace};
+use tracing::{debug, trace, error, instrument};
 
 use super::parse_records_from_file;
 use super::IndexFile;
@@ -55,7 +55,7 @@ impl BinLogManager {
 
         thread::spawn(move || loop {
             if let Err(err) = self.inner_run(&resume, init) {
-                println!("Error: {}", err);
+                error!("Error: {}", err);
             }
             init = false;
 

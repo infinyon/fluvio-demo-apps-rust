@@ -1,6 +1,7 @@
 use crossbeam_channel::{bounded, select, Receiver};
 use std::io::{Error, ErrorKind};
 use tracing_subscriber::prelude::*;
+use tracing::error;
 
 use fluvio_cdc::error::CdcError;
 use fluvio_cdc::messages::BinLogMessage;
@@ -49,15 +50,17 @@ async fn run() -> Result<(), CdcError> {
                         let bn_file = bn_message.bn_file.clone();
                         if !skip_fluvio {
                             if let Err(err) = flv_manager.process_msg(bn_message).await {
-                                println!("{:?}", err);
-                                std::process::exit(0);
+                                println!("{}", err.to_string());
+                                error!("{}", err.to_string());
+                                std::process::exit(1);
                             }
                         }
                         resume.update_binfile(bn_file).await?;
                     },
                     Err(err) => {
-                        println!("{:?}", err);
-                        std::process::exit(0);
+                        println!("{}", err.to_string());
+                        error!("{}", err.to_string());
+                        std::process::exit(1);
                     }
                 }
             }

@@ -1,5 +1,6 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+WAIT_SEC=60
 
 helpFunction()
 {
@@ -42,11 +43,44 @@ then
    exit 1
 fi
 
-mysql_cmd="mysql -h $MYSQL_HOST -P $mysql_port -u$MYSQL_USER -p$MYSQL_PASSWORD"
+###
+# Wait for mysql to come up
+##
 
-sql="SHOW DATABASES";
-result=$($mysql_cmd -e "$sql" 2>/dev/null)
-ret_code=$?
+checkMysql() {
+    mysql_cmd="mysql -h $MYSQL_HOST -P $mysql_port -u$MYSQL_USER -p$MYSQL_PASSWORD"
+
+    sql="SHOW DATABASES";
+    result=$($mysql_cmd -e "$sql" 2>/dev/null)
+    ret_code=$?
+}
+
+sleepWait()
+{
+    loop=0
+    while [ $loop -lt 2 ];
+    do
+        echo -n "."
+        let loop=loop+1
+        sleep .5
+    done
+}
+
+waitSec=0
+firstIteration=1
+checkMysql
+while [ $ret_code -ne 0 ] && [ $waitSec -lt $WAIT_SEC ];
+do
+    if [ $firstIteration -eq 1 ]; then echo " ⌛ Waiting for MySQL" ; fi
+
+    sleepWait
+    checkMysql
+
+    firstIteration=0
+    waitSec=$((waitSec+1))
+done
+
+if [ $firstIteration -eq 0 ]; then echo; fi
 
 if [ $ret_code -gt 0 ]; then
     echo " ❌ mysql is not running"

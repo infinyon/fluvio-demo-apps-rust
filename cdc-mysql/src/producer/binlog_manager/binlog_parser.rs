@@ -2,7 +2,7 @@ use crossbeam_channel::Sender;
 use mysql_binlog::event::TypeCode;
 use mysql_binlog::{parse_file, BinlogEvent};
 use std::io::{Error, ErrorKind};
-use tracing::{debug, instrument, trace};
+use tracing::{debug, trace, instrument};
 
 use crate::error::CdcError;
 use crate::messages::{BeforeAfterCols, BinLogMessage, Cols, Operation};
@@ -25,16 +25,10 @@ pub fn parse_records_from_file(
     let mut latest_offset = None;
 
     for event in parse_file(&log_file, offset)? {
-        trace!(?event, "Event from binlog parser:");
+        debug!(?event, "Event from binlog parser:");
         if let Ok(event) = event {
             latest_offset = Some(event.offset);
-
-            // print error and continue
-            if let Err(err) =
-                process_event(sender, file_name, event, offset, filters, local_store, urn)
-            {
-                debug!("{:?}", err);
-            }
+            process_event(sender, file_name, event, offset, filters, local_store, urn)?;
         }
     }
 
