@@ -1,6 +1,7 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PRODUCER_PROFILE="$DIR/../producer_profile.toml"
+ROOT_DIR="$DIR/../.."
+PRODUCER_PROFILE="$ROOT_DIR/producer_profile.toml"
 MYSQL_HOST="0.0.0.0"
 MYSQL_USER="fluvio"
 MYSQL_PASSWORD="fluvio4cdc!"
@@ -8,15 +9,15 @@ MYSQL_PASSWORD="fluvio4cdc!"
 ###
 ## SQL commands
 ###
-SQL_COMMANDS= ("CREATE DATABASE flvDb;")
+SQL_COMMANDS=("CREATE DATABASE flvDb;")
 SQL_COMMANDS+=("use flvDb; CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE);")
 SQL_COMMANDS+=("use flvDb; INSERT INTO pet VALUES ('Puffball','Diane','hamster','f','1999-03-30');")
 SQL_COMMANDS+=("use flvDb; INSERT INTO pet VALUES ('Jack','Peter','dog','m','1999-03-30');")
 SQL_COMMANDS+=("use flvDb; UPDATE pet SET birth = '1989-08-31' WHERE name = 'Jack';")
-SQL_COMMANDS+=("use flvDb; ALTER TABLE pet ADD COLUMN last-vaccine DATE;")
+SQL_COMMANDS+=("use flvDb; ALTER TABLE pet ADD COLUMN last_vaccine DATE;")
 SQL_COMMANDS+=("use flvDb; DELETE from pet where name='Puffball';")
 SQL_COMMANDS+=("use flvDb; INSERT INTO pet VALUES ('Spot', 'Jane', 'dog', 'm', '2010-11-2', Null);")
-SQL_COMMANDS+=("use flvDb; UPDATE pet SET last-vaccine='2020-6-10' WHERE name='Spot';")
+SQL_COMMANDS+=("use flvDb; UPDATE pet SET last_vaccine='2020-6-10' WHERE name='Spot';")
 
 ###
 ## Connect to Producer MYSQL

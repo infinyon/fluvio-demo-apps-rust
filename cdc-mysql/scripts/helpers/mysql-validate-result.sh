@@ -1,7 +1,8 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PRODUCER_PROFILE="$DIR/../producer_profile.toml"
-CONSUMER_PROFILE="$DIR/../consumer_profile.toml"
+ROOT_DIR="$DIR/../.."
+PRODUCER_PROFILE="$ROOT_DIR/producer_profile.toml"
+CONSUMER_PROFILE="$ROOT_DIR/consumer_profile.toml"
 MYSQL_HOST="0.0.0.0"
 MYSQL_USER="fluvio"
 MYSQL_PASSWORD="fluvio4cdc!"
@@ -65,13 +66,13 @@ fi
 ###
 ## Compare results
 ###
+echo ">> Leader:"
+echo "$producer_result"
+echo ">> Follower:"
+echo "$consumer_result"
 
 if [ "$consumer_result" == "$producer_result" ]; then
     echo " ✅ result - ok"
 else 
     echo " ❌ result - failed"
-    echo ">> Expected:"
-    echo "$producer_result"
-    echo ">> Found:"
-    echo "$consumer_result"
 fi
