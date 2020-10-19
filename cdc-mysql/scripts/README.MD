@@ -6,15 +6,38 @@ The CDC environment uses Docker to run 2 MySQL databases in parallel. The databa
 * Fluvio CLI must be installed and accessible `fluvio` command.
 * Docker must be installed.
 
-## Setup a Fluvio cluster
+**Tl;dr;** 
+
+Run test:
+
+```
+fluvio cluster install --local
+./setup.sh
+./run-test.sh
+```
+
+Clean up:
+
+```
+./cleanup.sh
+fluvio cluster install --local
+```
+
+## Rust Test (in 5 steps)
+
+### Setup a Fluvio cluster
 
 Ensure a fluvio cluster is running. To create a cluster run
 
 ```
 # fluvio cluster install --local
+...
+waiting for spu to be provisioned
+1 spus provisioned
 ```
 
-## Setup CDC environment
+
+### Setup CDC environment
 
 Setup start two Docker containers, one for `producer` and the other for `consumer`
 
@@ -34,7 +57,8 @@ Install 'mysql-consumer' container...
  🎉 Done!
 ```
 
-## Run Tests
+
+### Run Tests
 
 Run sanity test:
 
@@ -78,7 +102,7 @@ Spot    Jane    dog     m       2010-11-02      2020-06-10
 The test will leave the consumer & consumer database intact for manual inspection.
 
 
-## Clean-up CDC environment
+### Clean-up CDC environment
 
 Clean-up script will remove containers and local directories.
 
@@ -102,10 +126,14 @@ Uninstall cluster to remove topic
 
 ```
 # fluvio cluster install --local
+...
+topic.fluvio.infinyon.com "rust-mysql-cdc" deleted
+deleting label 'app=spu' object persistentvolumeclaims in: default
+No resources found
 ```
 
 
-## Helper Commands
+## Helper Commands (step by step)
 
 The top level scripts utilize a series fo helper commands
 
@@ -236,4 +264,28 @@ name    owner   species sex     birth   last_vaccine
 Jack    Peter   dog     m       1989-08-31      NULL
 Spot    Jane    dog     m       2010-11-02      2020-06-10
  ✅ result - ok
+```
+
+### Clean-up producer/consumer
+
+Remove producer container & directory
+
+```
+$ ./helpers/cleanup.sh -f ../producer_profile.toml
+Delete 'mysql-producer' container...
+ ✅ docker stop mysql-producer - ok
+ ✅ docker rm mysql-producer - ok
+ ✅ rm -rf /Users/aj/mysql-cdc/mysql-producer - ok
+ 🎉 Done!
+```
+
+Remove consumer container & directory
+
+```
+$ ./helpers/cleanup.sh -f ../consumer_profile.toml
+Delete 'mysql-consumer' container...
+ ✅ docker stop mysql-consumer - ok
+ ✅ docker rm mysql-consumer - ok
+ ✅ rm -rf /Users/aj/mysql-cdc/mysql-consumer - ok
+ 🎉 Done!
 ```
