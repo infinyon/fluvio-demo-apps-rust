@@ -11,6 +11,7 @@ The CDC environment uses Docker to run 2 MySQL databases in parallel. The databa
 Run test:
 
 ```
+cargo build -all
 fluvio cluster install --local
 ./setup.sh
 ./run-test.sh
@@ -23,7 +24,17 @@ Clean up:
 fluvio cluster install --local
 ```
 
-## Rust Test (in 5 steps)
+## Rust Test (in 6 steps)
+
+### Build producer/consumer
+
+Build producer/consumer images
+
+```
+$ cargo build -all
+    ...
+    Finished dev [unoptimized + debuginfo] target(s) in 0.14s
+```
 
 ### Setup a Fluvio cluster
 
