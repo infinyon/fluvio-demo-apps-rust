@@ -8,7 +8,7 @@ use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
-use tracing::{debug, trace, error, instrument};
+use tracing::{debug, error, instrument, trace};
 
 use super::parse_records_from_file;
 use super::IndexFile;

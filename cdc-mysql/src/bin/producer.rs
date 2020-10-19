@@ -1,7 +1,7 @@
 use crossbeam_channel::{bounded, select, Receiver};
 use std::io::{Error, ErrorKind};
-use tracing_subscriber::prelude::*;
 use tracing::error;
+use tracing_subscriber::prelude::*;
 
 use fluvio_cdc::error::CdcError;
 use fluvio_cdc::messages::BinLogMessage;

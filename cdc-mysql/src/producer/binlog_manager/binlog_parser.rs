@@ -2,7 +2,7 @@ use crossbeam_channel::Sender;
 use mysql_binlog::event::TypeCode;
 use mysql_binlog::{parse_file, BinlogEvent};
 use std::io::{Error, ErrorKind};
-use tracing::{debug, trace, instrument};
+use tracing::{debug, instrument, trace};
 
 use crate::error::CdcError;
 use crate::messages::{BeforeAfterCols, BinLogMessage, Cols, Operation};
