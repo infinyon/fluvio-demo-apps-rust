@@ -7,6 +7,10 @@ pub struct CliOpt {
     /// Producer profile file
     #[structopt(value_name = "producer-profile.toml", parse(from_os_str))]
     pub profile: PathBuf,
+
+    /// Skip producing to fluvio
+    #[structopt(long)]
+    pub skip_fluvio: bool,
 }
 
 pub fn get_cli_opt() -> CliOpt {

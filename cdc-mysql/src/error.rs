@@ -5,6 +5,7 @@ use fluvio::FluvioError;
 use mysql::Error as MysqlError;
 use mysql_binlog::errors::BinlogParseError;
 use serde_json::Error as JsonError;
+use sqlparser::parser::ParserError;
 
 #[derive(Error, Debug)]
 pub enum CdcError {
@@ -39,4 +40,6 @@ pub enum CdcError {
     BinlogFileError { source: IoError },
     #[error("CDC config error")]
     ConfigError { source: IoError },
+    #[error("Sql Parser error")]
+    SqlParserError { source: ParserError },
 }

@@ -1,8 +1,10 @@
 use async_std::fs;
 use std::io::Error;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+use tracing::debug;
 
 use crate::messages::BnFile;
+use crate::util::expand_tilde;
 
 #[derive(Debug, Clone)]
 pub struct Resume {
@@ -55,7 +57,7 @@ impl Resume {
 
     pub async fn update_binfile(&mut self, binfile: BnFile) -> Result<(), Error> {
         let serialized = serde_json::to_string(&binfile).unwrap();
-        println!("Writing binlog: {}", serialized);
+        debug!("Writing binlog: {}", serialized);
         fs::write(&self.path, serialized).await?;
         self.binfile.replace(binfile);
         Ok(())
@@ -65,25 +67,4 @@ impl Resume {
         let resume_contents = fs::read_to_string(&path).await?;
         Ok(serde_json::from_str::<BnFile>(&resume_contents).ok())
     }
-}
-
-fn expand_tilde<P: AsRef<Path>>(path_user_input: P) -> Option<PathBuf> {
-    let p = path_user_input.as_ref();
-
-    if !p.starts_with("~") {
-        return Some(p.to_path_buf());
-    }
-
-    if p == Path::new("~") {
-        return dirs::home_dir();
-    }
-
-    dirs::home_dir().map(|mut h| {
-        if h == Path::new("/") {
-            p.strip_prefix("~").unwrap().to_path_buf()
-        } else {
-            h.push(p.strip_prefix("~/").unwrap());
-            h
-        }
-    })
 }

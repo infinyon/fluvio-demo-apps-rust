@@ -1,5 +1,6 @@
 use crossbeam_channel::{bounded, select, Receiver};
 use std::io::{Error, ErrorKind};
+use tracing::error;
 use tracing_subscriber::prelude::*;
 
 use fluvio_cdc::error::CdcError;
@@ -13,6 +14,7 @@ async fn run() -> Result<(), CdcError> {
     let config =
         Config::load(&params.profile).map_err(|source| CdcError::ConfigError { source })?;
     let profile = config.profile();
+    let skip_fluvio = params.skip_fluvio;
 
     // create channels
     let ctrl_c_events = ctrl_channel()?;
@@ -46,15 +48,19 @@ async fn run() -> Result<(), CdcError> {
                     Ok(msg) => {
                         let bn_message: BinLogMessage = serde_json::from_str(&msg)?;
                         let bn_file = bn_message.bn_file.clone();
-                        if let Err(err) = flv_manager.process_msg(bn_message).await {
-                            println!("{:?}", err);
-                            std::process::exit(0);
+                        if !skip_fluvio {
+                            if let Err(err) = flv_manager.process_msg(bn_message).await {
+                                println!("{}", err.to_string());
+                                error!("{}", err.to_string());
+                                std::process::exit(1);
+                            }
                         }
                         resume.update_binfile(bn_file).await?;
                     },
                     Err(err) => {
-                        println!("{:?}", err);
-                        std::process::exit(0);
+                        println!("{}", err.to_string());
+                        error!("{}", err.to_string());
+                        std::process::exit(1);
                     }
                 }
             }

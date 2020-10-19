@@ -1,4 +1,6 @@
-last_offset_file = "~/data/consumer.offset"
+[data]
+base_path = "~/data"
+last_offset_file = "consumer.offset"
 
 [database]
 ip_or_host = "localhost"

@@ -34,6 +34,7 @@ async-std = "1.6.0"
 structopt = { version = "0.3", default-features = false }
 futures = { version = "0.3.4", features = ['async-await'] }
 mysql_binlog = { git = "https://github.com/infinyon/rust-mysql-binlog" }
+sqlparser = "0.6.1"
 thiserror = "1.0.20"
 color-eyre = "0.5.6"
 fluvio = "0.2.0"

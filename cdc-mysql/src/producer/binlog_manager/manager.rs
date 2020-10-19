@@ -8,15 +8,16 @@ use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
-use tracing::{debug, instrument};
+use tracing::{debug, error, instrument, trace};
 
 use super::parse_records_from_file;
 use super::IndexFile;
+use super::LocalStore;
 use super::Resume;
 use super::{get_file_id, BinLogFile};
 use crate::error::CdcError;
-use crate::producer::db_store::DbStore;
 use crate::producer::{Filters, Profile};
+use crate::util::expand_tilde;
 
 const DELAY_MIN_MILIS: u64 = 500;
 
@@ -29,7 +30,7 @@ pub struct BinLogManager {
     index_file: IndexFile,
     current_file: Option<BinLogFile>,
 
-    db_store: DbStore,
+    local_store: LocalStore,
     urn: String,
 }
 
@@ -43,7 +44,7 @@ impl BinLogManager {
             filters: profile.filters(),
             index_file: IndexFile::new(&base_dir, bn_index_file)?,
             current_file: None,
-            db_store: DbStore::new(profile.database()),
+            local_store: LocalStore::new(profile.local_store_file())?,
             urn: profile.mysql_resource_name().clone(),
         })
     }
@@ -54,7 +55,7 @@ impl BinLogManager {
 
         thread::spawn(move || loop {
             if let Err(err) = self.inner_run(&resume, init) {
-                println!("Error: {}", err);
+                error!("Error: {}", err);
             }
             init = false;
 
@@ -125,7 +126,7 @@ impl BinLogManager {
     #[instrument(skip(self))]
     fn send_current_file_records(&mut self) -> Result<(), CdcError> {
         let current_file = self.current_file.as_ref().unwrap();
-        debug!("Sending file: {:?}", current_file);
+        trace!("Sending file: {:?}", current_file);
 
         let new_offset = parse_records_from_file(
             &self.sender,
@@ -133,7 +134,7 @@ impl BinLogManager {
             current_file.file_name(),
             current_file.offset(),
             self.filters.as_ref(),
-            &mut self.db_store,
+            &mut self.local_store,
             &self.urn,
         )?;
         self.current_file.as_mut().unwrap().set_offset(new_offset);
@@ -159,7 +160,7 @@ impl BinLogManager {
                 current_file.file_name(),
                 current_file.offset(),
                 self.filters.as_ref(),
-                &mut self.db_store,
+                &mut self.local_store,
                 &self.urn,
             )?;
 
@@ -204,34 +205,14 @@ fn get_base_path_and_file_tuple(bn_file_path: &PathBuf) -> Result<(PathBuf, Stri
     Ok((base_dir, file))
 }
 
-fn expand_tilde<P: AsRef<Path>>(path_user_input: P) -> Option<PathBuf> {
-    let p = path_user_input.as_ref();
-
-    if !p.starts_with("~") {
-        return Some(p.to_path_buf());
-    }
-
-    if p == Path::new("~") {
-        return dirs::home_dir();
-    }
-
-    dirs::home_dir().map(|mut h| {
-        if h == Path::new("/") {
-            p.strip_prefix("~").unwrap().to_path_buf()
-        } else {
-            h.push(p.strip_prefix("~/").unwrap());
-            h
-        }
-    })
-}
-
 #[cfg(test)]
 mod test {
     use crossbeam_channel::bounded;
+    use std::fs;
     use std::path::PathBuf;
 
     use crate::messages::BnFile;
-    use crate::producer::Profile;
+    use crate::producer::{Data, Profile};
 
     use super::BinLogFile;
     use super::BinLogManager;
@@ -241,6 +222,8 @@ mod test {
     const BL_INDEX: &str = "binlog.index";
     const BL_FILE1: &str = "binlog.000001";
     const BL_FILE2: &str = "binlog.000002";
+    const LOCAL_STORE: &str = "local.store";
+    const RESUME_OFFSET: &str = "resume.offset";
 
     fn get_base_dir() -> PathBuf {
         let program_dir = std::env::current_dir().unwrap();
@@ -248,9 +231,23 @@ mod test {
     }
 
     fn build_profile() -> Profile {
-        let mut profile = Profile::default();
-        profile.set_binlog_index_file(get_base_dir().join(BL_INDEX));
-        profile
+        let base_path = get_base_dir();
+        Profile {
+            mysql_resource_name: "mysql_resource".to_owned(),
+            data: Data {
+                base_path: base_path.clone(),
+                binlog_index_file: base_path.join(BL_INDEX),
+                resume_offset_file: base_path.join(LOCAL_STORE),
+                local_store_file: base_path.join(RESUME_OFFSET),
+            },
+            filters: None,
+            fluvio: None,
+        }
+    }
+
+    fn clean_up(profile: &Profile) {
+        let _ = fs::remove_file(profile.resume_offset_file());
+        let _ = fs::remove_file(profile.local_store_file());
     }
 
     #[test]
@@ -307,5 +304,7 @@ mod test {
             fm.current_file.as_ref().unwrap(),
             bn_file_res.as_ref().unwrap()
         );
+
+        clean_up(&profile);
     }
 }

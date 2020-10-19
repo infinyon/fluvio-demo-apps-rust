@@ -1,11 +1,10 @@
 mysql_resource_name = "mysql-docker-80"
-binlog_index_file = "~/mysql-data/mysql-80/binlog.index"
 
-[database]
-ip_or_host = "0.0.0.0"
-port = 3380
-user = "root"
-password = "root"
+[data]
+base_path = "~/data"
+binlog_index_file = "binlog.index"
+resume_offset_file = "producer.offset"
+local_store_file = "producer.store"
 
 [filters]
 include_dbs = [ "flvTest" ]
