@@ -36,6 +36,7 @@ $ ./docker/install.sh -n mysql-producer -d ~/mysql-cdc/mysql-producer -p 3080
 ./docker/install.sh -n mysql-producer -d ~/mysql-cdc/mysql-producer -p 3080
  ✅ mkdir -p /Users/aj/mysql-cdc/mysql-producer - ok
  ✅ docker build . -t mysql-80 - ok
+f110fc2c66ec599f95fd7b799dd1ea5a20a8abfa5772bee1505dc90af9f0bcb4
  ✅ docker mysql-producer - running
 ```
 
