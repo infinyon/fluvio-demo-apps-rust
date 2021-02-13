@@ -1,4 +1,2 @@
 [workspace]
-members = [
-    "cdc-mysql",
-]
+members = ["cdc-mysql", "robot-assistant/server", "robot-assistant/wasm"]
