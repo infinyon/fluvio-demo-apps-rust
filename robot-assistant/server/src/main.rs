@@ -215,13 +215,11 @@ async fn ws_index(
                     .await
                     .expect("consumer");
                 while let Some(Ok(record)) = stream.next().await {
-                    if let Some(bytes) = record.try_into_bytes() {
-                        let json: String = String::from_utf8_lossy(&bytes).to_string();
-                        let message: Message = serde_json::from_str(&json).expect("message");
-                        let Message { session_id, cmd } = message;
-                        if session_id == uuid {
-                            addr.do_send(cmd)
-                        }
+                    let json = String::from_utf8_lossy(record.as_ref());
+                    let message: Message = serde_json::from_str(&json).expect("message");
+                    let Message { session_id, cmd } = message;
+                    if session_id == uuid {
+                        addr.do_send(cmd)
                     }
                 }
             });

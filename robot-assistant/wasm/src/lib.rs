@@ -1,14 +1,14 @@
-mod utils;
 mod element;
+mod utils;
 
+use element::Element;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use element::Element;
-use web_sys::Window;
-use web_sys::Location;
-use web_sys::WebSocket;
 use web_sys::ErrorEvent;
+use web_sys::Location;
 use web_sys::MessageEvent;
+use web_sys::WebSocket;
+use web_sys::Window;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
