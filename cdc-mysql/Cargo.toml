@@ -37,7 +37,7 @@ mysql_binlog = { git = "https://github.com/infinyon/rust-mysql-binlog" }
 sqlparser = "0.6.1"
 thiserror = "1.0.20"
 color-eyre = "0.5.6"
-fluvio = "0.5.0-beta.1"
+fluvio = "0.5.0-beta.2"
 
 [dev-dependencies]
 async-std = "1.6.5"
