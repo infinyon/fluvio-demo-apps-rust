@@ -215,7 +215,10 @@
 }
 
 .assistant .footer .textareaElement {
+	width: 338px;
+	resize: none;
 	padding: 15px 10px 0 10px;
+	border: none;
 	border-top: 1px solid #ccc;
 	min-height: 20px;
 	overflow-x: hidden;
@@ -239,9 +242,9 @@
 }
 
 .all-messages {
-    width: 300px;
+    width: 400px;
 }
 
 .bot-message {
-    font-weight:bold;
+    background-color: #eee;
 }

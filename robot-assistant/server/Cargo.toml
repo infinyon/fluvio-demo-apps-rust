@@ -27,3 +27,4 @@ serde_json = "1.0.62"
 serde_yaml = "0.8.15"
 tokio = { version = "1.2.0", features = ["sync"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
+robot-assistant-msg = { path = "../msg" }

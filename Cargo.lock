@@ -1180,6 +1180,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dbg"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4677188513e0e9d7adced5997cf9a1e7a3c996c994f90093325c5332c1a8b221"
+dependencies = [
+ "version_check 0.1.5",
+]
+
+[[package]]
 name = "derive_more"
 version = "0.99.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1268,6 +1277,12 @@ name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
+
+[[package]]
+name = "enclose"
+version = "1.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1056f553da426e9c025a662efa48b52e62e0a3a7648aa2d15aeaaf7f0d329357"
 
 [[package]]
 name = "encoding_rs"
@@ -1814,14 +1829,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "getopts"
+version = "0.2.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14dbbfd5c71d70241ecf9e6f13737f7b5ce823821063188d7e46c41d371eebd5"
+dependencies = [
+ "unicode-width",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8fc3cb4d91f53b50155bdcfd23f6a4c39ae1969c2ae85982b135750cccaf5fce"
 dependencies = [
  "cfg-if 1.0.0",
+ "js-sys",
  "libc",
  "wasi 0.9.0+wasi-snapshot-preview1",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1831,8 +1857,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c9495705279e7140bf035dde1f6e750c162df8b625267cd52cc44e0b156732c8"
 dependencies = [
  "cfg-if 1.0.0",
+ "js-sys",
  "libc",
  "wasi 0.10.2+wasi-snapshot-preview1",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1850,6 +1878,29 @@ name = "gimli"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
+
+[[package]]
+name = "gloo-events"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "088514ec8ef284891c762c88a66b639b3a730134714692ee31829765c5bc814f"
+dependencies = [
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
+name = "gloo-file"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f9fecfe46b5dc3cc46f58e98ba580cc714f2c93860796d002eb3527a465ef49"
+dependencies = [
+ "futures-channel",
+ "gloo-events",
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
+]
 
 [[package]]
 name = "gloo-timers"
@@ -2748,6 +2799,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulldown-cmark"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffade02495f22453cd593159ea2f59827aae7f53fa8323f756799b670881dcf8"
+dependencies = [
+ "bitflags",
+ "getopts",
+ "memchr",
+ "unicase",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2786,6 +2849,7 @@ dependencies = [
  "rand_chacha 0.2.2",
  "rand_core 0.5.1",
  "rand_hc 0.2.0",
+ "rand_pcg",
 ]
 
 [[package]]
@@ -2872,6 +2936,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand_pcg"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16abd0c1b639e9eb4d7c50c0b8100b0d0f849be2349829c740fe8e6eb4816429"
+dependencies = [
+ "rand_core 0.5.1",
+]
+
+[[package]]
 name = "rdrand"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2954,6 +3027,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "robot-assistant-msg"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "robot-assistant-server"
 version = "0.1.0"
 dependencies = [
@@ -2967,6 +3047,7 @@ dependencies = [
  "futures",
  "futures-util",
  "lazy_static",
+ "robot-assistant-msg",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -2980,6 +3061,8 @@ version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "js-sys",
+ "robot-assistant-msg",
+ "seed",
  "wasm-bindgen",
  "wasm-bindgen-test",
  "web-sys",
@@ -3073,6 +3156,32 @@ checksum = "f99b9d5e26d2a71633cc4f2ebae7cc9f874044e0c351a27e17892d76dce5678b"
 dependencies = [
  "core-foundation-sys",
  "libc",
+]
+
+[[package]]
+name = "seed"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b599be9cc57456f4b7fc99b8abfb154d4819f7b6c147e80be5580663dad4536"
+dependencies = [
+ "console_error_panic_hook",
+ "cookie",
+ "dbg",
+ "enclose",
+ "futures",
+ "gloo-file",
+ "gloo-timers",
+ "indexmap",
+ "js-sys",
+ "pulldown-cmark",
+ "rand 0.7.3",
+ "serde",
+ "serde_json",
+ "uuid",
+ "version_check 0.9.2",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
@@ -3937,6 +4046,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55c0f7123de74f0dab9b7d00fd614e7b19349cd1e2f5252bbe9b1754b59433be"
 dependencies = [
  "cfg-if 1.0.0",
+ "serde",
+ "serde_json",
  "wasm-bindgen-macro",
 ]
 

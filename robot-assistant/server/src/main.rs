@@ -5,7 +5,9 @@ use actix_web::{get, web, App, Error, HttpRequest, HttpResponse, HttpServer, Res
 use actix_web_actors::ws;
 use fluvio::{producer, Offset, TopicProducer};
 use futures::StreamExt;
+use robot_assistant_msg::{BotMsg, Item};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -46,7 +48,6 @@ impl Message {
 pub enum State {
     Text { prompt: String, next: usize },
     Number { prompt: String, items: Vec<Item> },
-    End { message: String },
 }
 
 impl State {
@@ -59,16 +60,11 @@ impl State {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Item {
-    pub answer: String,
-    pub next: usize,
-}
-
 pub struct RobotClient {
     uuid: Uuid,
     state_id: usize,
     states: Vec<State>,
+    choices: HashMap<usize, String>,
     shared_producer: Arc<Mutex<TopicProducer>>,
 }
 
@@ -77,10 +73,19 @@ impl RobotClient {
         let state_id = 0;
         let yaml = include_str!("../robot.yaml");
         let states: Vec<State> = serde_yaml::from_str(&yaml).expect("yaml");
+        let mut choices: HashMap<usize, String> = HashMap::new();
+        for state in states.iter() {
+            if let State::Number { items, .. } = state {
+                for item in items.iter() {
+                    choices.insert(item.next, item.answer.to_string());
+                }
+            }
+        }
         RobotClient {
             uuid,
             state_id,
             states,
+            choices,
             shared_producer,
         }
     }
@@ -107,15 +112,15 @@ impl RobotClient {
         let state = self.state();
         match state {
             State::Text { prompt, .. } => {
-                ctx.text(format!("<div class=\"bot-message\">{}</div>", prompt))
+                let json = serde_json::to_string(&BotMsg::BotText(prompt)).expect("json");
+                ctx.text(json);
             }
             State::Number { prompt, items } => {
-                ctx.text(format!("<div class=\"bot-message\">{}</div>", prompt));
-                for item in items {
-                    ctx.text(format!("<div>[ {} ] {}</div>", item.next, item.answer));
-                }
+                let json = serde_json::to_string(&BotMsg::BotText(prompt)).expect("json");
+                ctx.text(json);
+                let json = serde_json::to_string(&BotMsg::ChoiceRequest(items)).expect("json");
+                ctx.text(json);
             }
-            State::End { message } => ctx.text(format!("<div>{}</div>", message)),
         }
     }
 
@@ -139,12 +144,10 @@ impl Handler<Command> for RobotClient {
         let cur = self.states[self.state_id].clone();
         let cmd_text = match &cmd {
             Command::Text(text) => text.to_string(),
-            Command::Number(num) => num.to_string(),
+            Command::Number(num) => self.choices.get(num).expect("choice").to_string(),
         };
-        ctx.text(format!(
-            "<div style=\"text-align: right;\">{}</div>",
-            cmd_text
-        ));
+        let json = serde_json::to_string(&BotMsg::UserText(cmd_text)).expect("json");
+        ctx.text(json);
         let next_id = match (cur, cmd) {
             (State::Text { next: next_id, .. }, Command::Text(_)) => next_id,
             (State::Number { items, .. }, Command::Number(next_id)) => {

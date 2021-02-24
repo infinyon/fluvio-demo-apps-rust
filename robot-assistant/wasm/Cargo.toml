@@ -36,22 +36,25 @@ web-sys = { version = "0.3.46", features = [
     "ProgressEvent",
     "WebSocket",
     "Location",
-    'CssStyleDeclaration',
-    'Document',
-    'DomStringMap',
-    'DomTokenList',
-    'Element',
-    'Event',
-    'EventTarget',
-    'HtmlBodyElement',
-    'HtmlElement',
-    'HtmlInputElement',
-    'KeyboardEvent',
-    'Node',
-    'NodeList',
-    'Storage',
+    "CssStyleDeclaration",
+    "Document",
+    "DomStringMap",
+    "DomTokenList",
+    "Element",
+    "Event",
+    "EventTarget",
+    "HtmlBodyElement",
+    "HtmlElement",
+    "HtmlInputElement",
+    "KeyboardEvent",
+    "Node",
+    "NodeList",
+    "Storage",
+    "Attr",
 ] }
 js-sys = "0.3.46"
+seed = "0.8.0"
+robot-assistant-msg = { path = "../msg" }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"

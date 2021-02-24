@@ -1,6 +1,6 @@
 ---
 - Text:
-    prompt: "Hi there! I'm Bot."
+    prompt: "Hi there! I'm Bot. Are you ready?"
     next: 1
 - Number:
     prompt: "Here are a few suggestions for you:"
@@ -48,5 +48,6 @@
         next: 1
       - answer: "No, thanks"
         next: 11
-- End:
-    message: Have a great day.
+- Text:
+    prompt: Have a great day.
+    next: 0

@@ -11,6 +11,6 @@ This example remakes this project described in this blog https://www.fluvio.io/b
 Steps to start the project
 
 - `curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh` will install wasm-pack
-- `cargo make robot-assistant-topic` will create topic "robot-assistant" in the fluvio cluster
-- `cargo make robot-assistant-build` will build both the frontend and backend of the project
+- `cargo make topic` will create topic "robot-assistant" in the fluvio cluster
+- `cargo make fullstack` will build both the frontend and backend of the project
 - Visit http://localhost:8080/index.html
