@@ -112,12 +112,7 @@ impl DbStore {
         Ok(())
     }
 
-    fn alter_table(
-        &mut self,
-        db_name: &str,
-        table_name: String,
-        column_op: ColumnOp,
-    ) {
+    fn alter_table(&mut self, db_name: &str, table_name: String, column_op: ColumnOp) {
         match column_op {
             ColumnOp::Add(column_name) => self.add_table_column(db_name, table_name, column_name),
             ColumnOp::Rename(old_column, new_column) => {
@@ -139,12 +134,7 @@ impl DbStore {
         }
     }
 
-    fn add_table_column(
-        &mut self,
-        db_name: &str,
-        table_name: String,
-        column: String,
-    ) {
+    fn add_table_column(&mut self, db_name: &str, table_name: String, column: String) {
         if let Some(table_store) = self.dbs.get_mut(db_name) {
             if let Some(columns) = table_store.tables.get_mut(&table_name) {
                 columns.push(column);
@@ -170,12 +160,7 @@ impl DbStore {
         }
     }
 
-    fn drop_table_column(
-        &mut self,
-        db_name: &str,
-        table_name: String,
-        column: String,
-    ) {
+    fn drop_table_column(&mut self, db_name: &str, table_name: String, column: String) {
         if let Some(table_store) = self.dbs.get_mut(db_name) {
             if let Some(columns) = table_store.tables.get_mut(&table_name) {
                 columns.retain(|x| *x != column);
