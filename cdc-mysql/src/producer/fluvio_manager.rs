@@ -67,11 +67,9 @@ pub async fn get_last_record(consumer: &PartitionConsumer) -> Result<Option<Stri
         }
     } else {
         for batch in response.records.batches {
-            for record in batch.records {
-                if let Some(bytes) = record.value().inner_value() {
-                    let msg = String::from_utf8(bytes).unwrap();
-                    return Ok(Some(msg));
-                }
+            if let Some(record) = batch.records().last() {
+                let msg = String::from_utf8_lossy(record.value.as_ref());
+                return Ok(Some(msg.to_string()));
             }
         }
     }

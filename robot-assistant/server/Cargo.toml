@@ -1,0 +1,30 @@
+[package]
+name = "robot-assistant-server"
+version = "0.1.0"
+authors = ["Fluvio Contributors team@fluvio.io"]
+edition = "2018"
+license = "Apache-2.0"
+repository = "https://github.com/infinyon/fluvio"
+description = "Authorization framework for Fluvio"
+
+[features]
+default = []
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+actix = "0.10.0"
+actix-files = "0.5.0"
+actix-service = "1.0.6"
+actix-session = "0.4.0"
+actix-web = "3"
+actix-web-actors = "3.0.0"
+fluvio = "0.5.0-beta.2"
+futures = "0.3.12"
+futures-util = "0.3.12"
+lazy_static = "1.4.0"
+serde = "1.0.123"
+serde_json = "1.0.62"
+serde_yaml = "0.8.15"
+tokio = { version = "1.2.0", features = ["sync"] }
+uuid = { version = "0.8", features = ["serde", "v4"] }
+robot-assistant-msg = { path = "../msg" }

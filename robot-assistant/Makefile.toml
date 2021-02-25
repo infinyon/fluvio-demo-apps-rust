@@ -1,0 +1,17 @@
+[tasks.topic]
+script = 'fluvio topic create robot-assistant'
+
+[tasks.server]
+script = 'cargo run --bin robot-assistant-server'
+
+[tasks.wasm]
+script = 'wasm-pack build wasm --target web --out-dir ../pkg'
+
+[tasks.fullstack]
+run_task = { name = ["server", "wasm"], parallel = true }
+
+[tasks.wasm-dev]
+script = 'fswatch -o -r ./wasm/src ./msg/src |xargs -I {} wasm-pack build wasm --target web --out-dir ../pkg'
+
+[tasks.fullstack-dev]
+run_task = { name = ["server", "wasm-dev"], parallel = true }
