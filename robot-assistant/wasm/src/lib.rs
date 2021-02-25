@@ -65,6 +65,7 @@ enum Msg {
     OpenDialog,
     CloseDialog,
     ResetSession,
+    ScrollTop,
     ClickChoice(String),
     WebSocketMessage(WebSocketMessage),
     WebSocketOpened,
@@ -77,9 +78,15 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::OpenDialog => model.open = true,
         Msg::CloseDialog => model.open = false,
+        Msg::ScrollTop => {
+            let ib = "ib".get_element().expect("ib");
+            ib.set_scroll_top(ib.scroll_height() + ib.client_height());
+        }
         Msg::WebSocketMessage(msg) => {
             let bot_msg = msg.json::<BotMsg>().expect("bot msg");
             model.messages.push(bot_msg);
+            orders.force_render_now();
+            orders.send_msg(Msg::ScrollTop);
         }
         Msg::WebSocketOpened => {
             model.connected = true;
@@ -89,6 +96,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.connected = false;
         }
         Msg::WebSocketFailed => {
+            console_log!("WebSocketFailed");
             panic!();
         }
         Msg::ResetSession => {
@@ -101,7 +109,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::KeyDown(event) => {
             let key_code = event.key_code();
-            console_log!("{}", key_code);
             let target = event.target().unwrap();
             let textarea = seed::to_textarea(&target);
             if key_code == 13 {
@@ -182,7 +189,11 @@ fn view(model: &Model) -> Node<Msg> {
             ],
             div![
                 C!["body-wrapper"],
-                div![C!["inner-body"], view_messages(&model.messages)]
+                div![
+                    C!["inner-body"],
+                    attrs! {At::Id => "ib"},
+                    view_messages(&model.messages)
+                ]
             ],
             div![
                 C!["footer"],
