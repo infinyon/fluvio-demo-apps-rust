@@ -76,10 +76,10 @@ impl DbStore {
                     self.create_table(db_name, table_name, columns)?;
                 }
                 TableOp::AlterTable(table_name, column_op) => {
-                    self.alter_table(db_name, table_name, column_op)?;
+                    self.alter_table(db_name, table_name, column_op);
                 }
                 TableOp::DropTable(table_names) => {
-                    self.drop_tables(db_name, table_names)?;
+                    self.drop_tables(db_name, table_names);
                 }
             }
         }
@@ -112,12 +112,7 @@ impl DbStore {
         Ok(())
     }
 
-    fn alter_table(
-        &mut self,
-        db_name: &str,
-        table_name: String,
-        column_op: ColumnOp,
-    ) -> Result<(), Error> {
+    fn alter_table(&mut self, db_name: &str, table_name: String, column_op: ColumnOp) {
         match column_op {
             ColumnOp::Add(column_name) => self.add_table_column(db_name, table_name, column_name),
             ColumnOp::Rename(old_column, new_column) => {
@@ -127,7 +122,7 @@ impl DbStore {
         }
     }
 
-    fn drop_tables(&mut self, db_name: &str, table_names: Vec<String>) -> Result<(), Error> {
+    fn drop_tables(&mut self, db_name: &str, table_names: Vec<String>) {
         if let Some(table_store) = self.dbs.get_mut(db_name) {
             for table_name in &table_names {
                 table_store.tables.remove(table_name);
@@ -137,22 +132,14 @@ impl DbStore {
                 self.dbs.remove(db_name);
             }
         }
-
-        Ok(())
     }
 
-    fn add_table_column(
-        &mut self,
-        db_name: &str,
-        table_name: String,
-        column: String,
-    ) -> Result<(), Error> {
+    fn add_table_column(&mut self, db_name: &str, table_name: String, column: String) {
         if let Some(table_store) = self.dbs.get_mut(db_name) {
             if let Some(columns) = table_store.tables.get_mut(&table_name) {
                 columns.push(column);
             }
         }
-        Ok(())
     }
 
     fn rename_table_column(
@@ -161,7 +148,7 @@ impl DbStore {
         table_name: String,
         old_column: String,
         new_column: String,
-    ) -> Result<(), Error> {
+    ) {
         if let Some(table_store) = self.dbs.get_mut(db_name) {
             if let Some(columns) = table_store.tables.get_mut(&table_name) {
                 for column in columns.iter_mut() {
@@ -171,21 +158,14 @@ impl DbStore {
                 }
             }
         }
-        Ok(())
     }
 
-    fn drop_table_column(
-        &mut self,
-        db_name: &str,
-        table_name: String,
-        column: String,
-    ) -> Result<(), Error> {
+    fn drop_table_column(&mut self, db_name: &str, table_name: String, column: String) {
         if let Some(table_store) = self.dbs.get_mut(db_name) {
             if let Some(columns) = table_store.tables.get_mut(&table_name) {
                 columns.retain(|x| *x != column);
             }
         }
-        Ok(())
     }
 
     fn get_columns(&mut self, db_name: &str, table_name: &str) -> Result<Vec<String>, Error> {

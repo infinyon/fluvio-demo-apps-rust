@@ -65,14 +65,11 @@ pub async fn get_last_record(consumer: &PartitionConsumer) -> Result<Option<Stri
                 response.error_code.to_sentence()
             );
         }
-    } else {
-        for batch in response.records.batches {
-            for record in batch.records {
-                if let Some(bytes) = record.value().inner_value() {
-                    let msg = String::from_utf8(bytes).unwrap();
-                    return Ok(Some(msg));
-                }
-            }
+    } else if let Some(batch) = response.records.batches.first() {
+        if let Some(record) = batch.records().first() {
+            let bytes = record.get_value().as_ref();
+            let msg = String::from_utf8(bytes.to_vec()).unwrap();
+            return Ok(Some(msg));
         }
     }
 

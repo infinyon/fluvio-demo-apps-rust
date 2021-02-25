@@ -46,7 +46,7 @@ fn make_uri(mysql_resource_name: &str, db_name: &str, table_name: Option<&str>) 
 
     link.push_str(db_name);
     if let Some(table_name) = table_name {
-        link.push_str("/");
+        link.push('/');
         link.push_str(table_name);
     }
     parts.path_and_query = Some(link.parse().unwrap());
