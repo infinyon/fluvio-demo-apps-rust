@@ -36,7 +36,7 @@ pub struct BinLogManager {
 
 impl BinLogManager {
     pub fn new(profile: &Profile, sender: Sender<String>) -> Result<Self, Error> {
-        let (base_dir, bn_index_file) = get_base_path_and_file_tuple(profile.binlog_index_file())?;
+        let (base_dir, bn_index_file) = get_base_path_and_file_tuple(profile.binlog_index_file());
 
         Ok(Self {
             sender,
@@ -187,7 +187,7 @@ impl BinLogManager {
     }
 }
 
-fn get_base_path_and_file_tuple(bn_file_path: &PathBuf) -> Result<(PathBuf, String), Error> {
+fn get_base_path_and_file_tuple(bn_file_path: &PathBuf) -> (PathBuf, String) {
     let mut base_dir = bn_file_path.parent().unwrap().to_path_buf();
 
     // expand tilde if used
@@ -202,7 +202,7 @@ fn get_base_path_and_file_tuple(bn_file_path: &PathBuf) -> Result<(PathBuf, Stri
         .unwrap()
         .to_owned();
 
-    Ok((base_dir, file))
+    (base_dir, file)
 }
 
 #[cfg(test)]

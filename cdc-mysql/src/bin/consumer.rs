@@ -66,10 +66,9 @@ async fn consume(
 
     // read read from producer and print to terminal
     while let Some(Ok(record)) = stream.next().await {
-        if let Some(bytes) = record.try_into_bytes() {
-            let msg = String::from_utf8(bytes).expect("error vec => string");
-            sender.send(msg).expect("error sending message");
-        }
+        let bytes = record.as_ref();
+        let msg = String::from_utf8(bytes.to_vec()).expect("error vec => string");
+        sender.send(msg).expect("error sending message");
     }
 
     Ok(())
