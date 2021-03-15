@@ -67,7 +67,7 @@ pub async fn get_last_record(consumer: &PartitionConsumer) -> Result<Option<Stri
         }
     } else if let Some(batch) = response.records.batches.first() {
         if let Some(record) = batch.records().first() {
-            let bytes = record.get_value().as_ref();
+            let bytes = record.value().as_ref();
             let msg = String::from_utf8(bytes.to_vec()).unwrap();
             return Ok(Some(msg));
         }
