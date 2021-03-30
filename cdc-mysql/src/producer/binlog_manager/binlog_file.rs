@@ -5,7 +5,7 @@
 use std::fmt;
 use std::fs;
 use std::io::Error;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 use std::ffi::OsStr;
@@ -32,7 +32,7 @@ impl fmt::Display for BinLogFile {
 }
 
 impl BinLogFile {
-    pub fn new(base_dir: &PathBuf, file_ref: &str, offset: Option<u64>) -> Result<Self, Error> {
+    pub fn new(base_dir: &Path, file_ref: &str, offset: Option<u64>) -> Result<Self, Error> {
         let path = base_dir.join(file_ref);
         let file_metadata = fs::metadata(&path)?;
         let file_id = get_file_id(&path);
@@ -82,7 +82,7 @@ impl BinLogFile {
     }
 }
 
-pub fn get_file_id(path: &PathBuf) -> i32 {
+pub fn get_file_id(path: &Path) -> i32 {
     let extension = path.extension().unwrap_or_else(|| OsStr::new("0"));
     let file_id = extension.to_str().unwrap_or("0").parse::<i32>().unwrap();
 
