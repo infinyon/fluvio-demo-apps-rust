@@ -1,0 +1,5 @@
+/target
+Cargo.lock
+my_python_lib.cpython-39-x86_64-linux-gnu.so
+my_python_lib.egg-info/
+venv/
