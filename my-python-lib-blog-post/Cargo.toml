@@ -1,0 +1,16 @@
+[package]
+name = "my-python-lib"
+version = "0.1.0"
+authors = ["Sebastian Imlay <sebastian.imlay@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+cpython = { version = "0.5", features = ["extension-module"] }
+
+[build-dependencies]
+flapigen = "0.6.0-pre7"
+

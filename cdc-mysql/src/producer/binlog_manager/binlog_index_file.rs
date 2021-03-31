@@ -20,7 +20,7 @@ pub struct IndexFile {
 }
 
 impl IndexFile {
-    pub fn new(base_dir: &PathBuf, index_file: String) -> Result<Self, Error> {
+    pub fn new(base_dir: &Path, index_file: String) -> Result<Self, Error> {
         let path = get_index_file_path(base_dir, index_file)?;
         let file_metadata = fs::metadata(&path)?;
 
@@ -73,7 +73,7 @@ impl IndexFile {
     }
 }
 
-fn get_index_file_path(base_dir: &PathBuf, file: String) -> Result<PathBuf, Error> {
+fn get_index_file_path(base_dir: &Path, file: String) -> Result<PathBuf, Error> {
     let path = base_dir.join(file);
 
     match path.exists() {

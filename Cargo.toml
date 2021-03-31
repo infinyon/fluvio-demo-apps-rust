@@ -1,4 +1,5 @@
 [workspace]
 members = [
     "cdc-mysql",
+    "my-python-lib-blog-post",
 ]

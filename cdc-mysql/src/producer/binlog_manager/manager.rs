@@ -187,7 +187,7 @@ impl BinLogManager {
     }
 }
 
-fn get_base_path_and_file_tuple(bn_file_path: &PathBuf) -> (PathBuf, String) {
+fn get_base_path_and_file_tuple(bn_file_path: &Path) -> (PathBuf, String) {
     let mut base_dir = bn_file_path.parent().unwrap().to_path_buf();
 
     // expand tilde if used

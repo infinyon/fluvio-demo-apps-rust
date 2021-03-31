@@ -2,7 +2,7 @@ use async_std::fs;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::{Error, ErrorKind};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::debug;
 
 use super::{ColumnOp, TableOp};
@@ -182,13 +182,13 @@ impl DbStore {
     }
 }
 
-fn save_to_file(path: &PathBuf, db_store: &DbStore) -> Result<(), Error> {
+fn save_to_file(path: &Path, db_store: &DbStore) -> Result<(), Error> {
     let serialized = serde_json::to_string(&db_store).unwrap();
     debug!("Writing Store: {}", serialized);
     async_std::task::block_on(async { fs::write(&path, serialized).await })
 }
 
-fn load_from_file(path: &PathBuf) -> Result<Option<DbStore>, Error> {
+fn load_from_file(path: &Path) -> Result<Option<DbStore>, Error> {
     let path = async_std::path::PathBuf::from(path);
     async_std::task::block_on(async {
         if !path.exists().await {

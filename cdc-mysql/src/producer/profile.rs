@@ -16,7 +16,7 @@ pub struct Config {
 
 impl Config {
     /// try to load from default locations
-    pub fn load(path: &PathBuf) -> Result<Self, Error> {
+    pub fn load(path: &Path) -> Result<Self, Error> {
         Self::from_file(path)
     }
 

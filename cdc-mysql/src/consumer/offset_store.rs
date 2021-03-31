@@ -1,6 +1,6 @@
 use async_std::fs;
 use std::io::{Error, ErrorKind};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub struct OffsetStore {
@@ -9,7 +9,7 @@ pub struct OffsetStore {
 }
 
 impl OffsetStore {
-    pub async fn init(offset_file: &PathBuf) -> Result<OffsetStore, Error> {
+    pub async fn init(offset_file: &Path) -> Result<OffsetStore, Error> {
         let file = get_or_create_file(offset_file).await?;
         let offset = read_offset(&file).await?;
 
@@ -29,19 +29,19 @@ impl OffsetStore {
     }
 }
 
-async fn get_or_create_file(file_path: &PathBuf) -> Result<PathBuf, Error> {
+async fn get_or_create_file(file_path: &Path) -> Result<PathBuf, Error> {
     match file_path.exists() {
-        true => Ok(file_path.clone()),
+        true => Ok(file_path.to_path_buf()),
         false => {
             let parent = file_path.parent().unwrap();
             fs::create_dir_all(&parent).await?;
             fs::write(&file_path, "0").await?;
-            Ok(file_path.clone())
+            Ok(file_path.to_path_buf())
         }
     }
 }
 
-async fn read_offset(file: &PathBuf) -> Result<i64, Error> {
+async fn read_offset(file: &Path) -> Result<i64, Error> {
     let bytes = fs::read(file).await?;
     let data = String::from_utf8(bytes)
         .map_err(|err| Error::new(ErrorKind::InvalidData, format!("{}", err)))?;
@@ -53,7 +53,7 @@ async fn read_offset(file: &PathBuf) -> Result<i64, Error> {
     Ok(result)
 }
 
-async fn write_offset(file: &PathBuf, offset: i64) -> Result<(), Error> {
+async fn write_offset(file: &Path, offset: i64) -> Result<(), Error> {
     fs::write(file, offset.to_string()).await?;
     Ok(())
 }
