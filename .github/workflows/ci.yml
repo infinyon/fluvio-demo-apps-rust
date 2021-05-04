@@ -76,7 +76,9 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: Install llvm
-        run: sudo apt-get install -y llvm
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y llvm
       - name: Run Simple Java Test
         run: |
           make -C my-java-lib-blog-post view-jar test
