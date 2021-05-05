@@ -33,7 +33,7 @@ jobs:
         run: cd cdc-mysql/ && cargo +${{ matrix.rust }} clippy --all-targets --all-features -- -D warnings
 
   check_python_blog_post:
-    name: Check clippy for Rust demo apps
+    name: Check build for Rust Python Blogpost
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -55,6 +55,33 @@ jobs:
       - name: Run Simple Python
         run: |
           make -C my-python-lib-blog-post run-simple
+
+  check_java_blog_post:
+    name: Check build for Rust Java Blogpost
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+        java: [15]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install ${{ matrix.rust }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Setup java
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Install llvm
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y llvm
+      - name: Run Simple Java Test
+        run: |
+          make -C my-java-lib-blog-post view-jar test
 
   check_fmt:
     name: Check formatting for Rust demo apps
